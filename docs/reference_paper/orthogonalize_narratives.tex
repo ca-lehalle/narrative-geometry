@@ -10,13 +10,12 @@
 
 \def\og{``}
 \def\fg{''}
-
+\usepackage{soul}
 % <-- to be removed later
 % because I may want to comment \RequirePackage[semibold]{sourcesanspro} (line 188 of class)
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 % --> stop section to be removed
-
 
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{mathtools}
@@ -50,6 +49,8 @@
 \def\calN{\mathcal{N}}
 
 \def\Esp{\mathbb{E}}
+
+\def\narr#1{{\sc #1}}
 
 %%% TODO helper (remove before submission)
 \newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
@@ -94,81 +95,84 @@ the naive cosine projection yields synchronised, uninformative time series.
 \TODO{Refine abstract once results section is complete.}
 \end{abstract}
 
+{\color{Orange}[CAL: juste pour vérifier que tout est coherent]
+\tableofcontents
+
+}
+% % -------------------------------------------------------
+% \section{Introduction}
+% \label{sec:intro}
+% % -------------------------------------------------------
+
+% Since the emergence of vector representations of texts, their power has been evidenced
+% by the structure of distance in the Euclidean space to which they belong.
+% Early demonstrations include the native clustering of Self-Organizing Map (SOM)
+% prototypes on Grimm tales~\autocite{honkela1995contextual} and the celebrated
+% \textit{king} $-$ \textit{man} $+$ \textit{woman} $=$ \textit{queen} relation
+% satisfied by doc2vec embeddings~\autocite{mikolov2013linguistic}.
+% Modern bidirectional encoders such as BERT have turned semantic similarity into
+% a practical primitive, notably in Retrieval-Augmented Generation (RAG)
+% pipelines~\autocite{wang2024utilizing}.
+
+% Concurrently, the concept of \emph{narrative competition} has gained traction in
+% economic literature~\autocite{shiller2020narrative}:
+% narratives are the mean field through which opinions form,
+% and agents condition their decisions on the perceived relative dominance of narratives.
+% Institutional actors exploit this dynamic; for instance, the Bank of England
+% instruments narratives to guide market expectations~\autocite{naef2024blowing}.
+% Market participants continuously probe and reshape narratives in a closed feedback loop
+% that renders straightforward causal analysis difficult.
+
+% The narrative viewpoint differs fundamentally from sentiment analysis.
+% Rather than classifying a document as positive or negative---an approach that
+% conflates semantic and frequentist synonyms~\autocite{li2024mathematics}---it
+% uses the alignment of a text with the vector representation of a narrative as
+% a measure of \emph{importance}.
+% Formally, the cosine similarity between a news article and a narrative takes values
+% close to $+1$ when they are perfectly aligned, close to $-1$ when contradictory,
+% and close to zero when semantically independent in the high-dimensional embedding space.
+
+% \textcolor{ForestGreen}{\bf [CAL: todo, biblio w/r to gender neutrality]}
+
+
+% \paragraph{Challenges.}
+% Measuring relative narrative strength poses two distinct challenges.
+% \begin{enumerate}
+% %    \item \textcolor{ForestGreen}{\bf [CAL: je suis d'accord on peut l'enlever] $\rightarrow$} \textbf{Normalisation.}
+% %    Dominance scores of narratives grouped in a common \emph{chapter}
+% %    (i.e.\ narratives sharing a broad topic) should sum to one,
+% %    enabling meaningful comparison of their relative weights. \TODO{voir si ça a vraiment un rapport avec la suite - on n'en reparle pas}
+
+%     \item \textbf{Idiosyncratic vs.\ common co-movements.}
+%     Even apparently opposed narratives---say,
+%     ``Clinton will win the election'' and ``Trump will win the election''---share
+%     a common semantic direction (the \textit{elections} axis) that causes
+%     their cosine scores to rise and fall in unison for reasons unrelated to
+%     which candidate is actually gaining ground.
+%     Disentangling idiosyncratic from common variation is therefore essential.
+%     \textcolor{ForestGreen}{\bf [CAL: je trouve délicat de mettre en exemple qu'on ne traite pas dans le papier; est-ce que ça fait sens de les rajouter?]} 
+% \end{enumerate}
+
+% \paragraph{Contributions.}
+% We propose an algebraic framework that simultaneously addresses both challenges.
+% Our key contributions are:
+% \begin{itemize}
+%     \item A global orthogonalization procedure on the Stiefel manifold that
+%           constructs, for each narrative, a representative vector that is close
+%           to the original narrative while being orthogonal to all others
+%           (Section~\ref{sec:ortho}).
+%     \item A linear generative model for article embeddings that provides a
+%           rigorous statistical justification for the procedure, yielding an
+%           unbiased estimator of narrative prevalence and formally exposing the
+%           correlation bias of the naive approach (Section~\ref{sec:model}).
+%     \item An empirical validation on a publicly available labeled news dataset,
+%           demonstrating qualitative and quantitative agreement with known
+%           historical events (Section~\ref{sec:application}).
+% \end{itemize}
 
 % -------------------------------------------------------
-\section{Introduction}
-\label{sec:intro}
-% -------------------------------------------------------
-
-Since the emergence of vector representations of texts, their power has been evidenced
-by the structure of distance in the Euclidean space to which they belong.
-Early demonstrations include the native clustering of Self-Organizing Map (SOM)
-prototypes on Grimm tales~\autocite{honkela1995contextual} and the celebrated
-\textit{king} $-$ \textit{man} $+$ \textit{woman} $=$ \textit{queen} relation
-satisfied by doc2vec embeddings~\autocite{mikolov2013linguistic}.
-Modern bidirectional encoders such as BERT have turned semantic similarity into
-a practical primitive, notably in Retrieval-Augmented Generation (RAG)
-pipelines~\autocite{wang2024utilizing}.
-
-Concurrently, the concept of \emph{narrative competition} has gained traction in
-economic literature~\autocite{shiller2020narrative}:
-narratives are the mean field through which opinions form,
-and agents condition their decisions on the perceived relative dominance of narratives.
-Institutional actors exploit this dynamic; for instance, the Bank of England
-instruments narratives to guide market expectations~\autocite{naef2024blowing}.
-Market participants continuously probe and reshape narratives in a closed feedback loop
-that renders straightforward causal analysis difficult.
-
-The narrative viewpoint differs fundamentally from sentiment analysis.
-Rather than classifying a document as positive or negative---an approach that
-conflates semantic and frequentist synonyms~\autocite{li2024mathematics}---it
-uses the alignment of a text with the vector representation of a narrative as
-a measure of \emph{importance}.
-Formally, the cosine similarity between a news article and a narrative takes values
-close to $+1$ when they are perfectly aligned, close to $-1$ when contradictory,
-and close to zero when semantically independent in the high-dimensional embedding space.
-
-\textcolor{ForestGreen}{\bf [CAL: todo, biblio w/r to gender neutrality]}
-
-\paragraph{Challenges.}
-Measuring relative narrative strength poses two distinct challenges.
-\begin{enumerate}
-%    \item \textcolor{ForestGreen}{\bf [CAL: je suis d'accord on peut l'enlever] $\rightarrow$} \textbf{Normalisation.}
-%    Dominance scores of narratives grouped in a common \emph{chapter}
-%    (i.e.\ narratives sharing a broad topic) should sum to one,
-%    enabling meaningful comparison of their relative weights. \TODO{voir si ça a vraiment un rapport avec la suite - on n'en reparle pas}
-
-    \item \textbf{Idiosyncratic vs.\ common co-movements.}
-    Even apparently opposed narratives---say,
-    ``Clinton will win the election'' and ``Trump will win the election''---share
-    a common semantic direction (the \textit{elections} axis) that causes
-    their cosine scores to rise and fall in unison for reasons unrelated to
-    which candidate is actually gaining ground.
-    Disentangling idiosyncratic from common variation is therefore essential.
-    \textcolor{ForestGreen}{\bf [CAL: je trouve délicat de mettre en exemple qu'on ne traite pas dans le papier; est-ce que ça fait sens de les rajouter?]} 
-\end{enumerate}
-
-\paragraph{Contributions.}
-We propose an algebraic framework that simultaneously addresses both challenges.
-Our key contributions are:
-\begin{itemize}
-    \item A global orthogonalization procedure on the Stiefel manifold that
-          constructs, for each narrative, a representative vector that is close
-          to the original narrative while being orthogonal to all others
-          (Section~\ref{sec:ortho}).
-    \item A linear generative model for article embeddings that provides a
-          rigorous statistical justification for the procedure, yielding an
-          unbiased estimator of narrative prevalence and formally exposing the
-          correlation bias of the naive approach (Section~\ref{sec:model}).
-    \item An empirical validation on a publicly available labeled news dataset,
-          demonstrating qualitative and quantitative agreement with known
-          historical events (Section~\ref{sec:application}).
-\end{itemize}
-
-% -------------------------------------------------------
-\section{Intro (bis)}
+\section{Positioning}
 \label{sec:introbis}
-% -------------------------------------------------------
 
 Since the emergence of vector representations of texts, their power has been evidenced
 by the structure of distance in the Euclidean space to which they belong.
@@ -197,7 +201,6 @@ Formally, the cosine similarity between a news article and a narrative takes val
 close to $+1$ when they are perfectly aligned, close to $-1$ when contradictory,
 and close to zero when semantically independent in the high-dimensional embedding space.
 
-\paragraph 
 This paper addresses the following question: how can one monitor, over time and
 at scale, the relative prevalence of competing narratives within a large corpus of
 text? Existing approaches largely fall into three families. The first relies on keyword or dictionary-based counting: canonical
@@ -219,7 +222,9 @@ the corpus to emerge as a topic on its own. The third relies on supervised class
 trained to detect a predefined narrative from labeled examples: for
 instance,~\autocite{coan2021computer} build a two-level taxonomy of climate-change
 contrarian claims and train a classifier on tens of thousands of manually annotated
-paragraphs; + papier de Salomé Do et Étienne Ollion aumgented scientist. Unlike the first two families, such classifiers, built on contextual
+paragraphs; \textcolor{Orange}{+ papier de Salomé Do et Étienne Ollion aumgented scientist} \JAMM{j'avais lu ce papier qui décrit exactement une approche par classification avec BERT, est-ce pertinent ?}. 
+\textcolor{Orange}{[CAL: surtout si on ajoute l'exemple de l'IRan mais ça peut faire beaucoup à ajouter, je me propose de faire un autre papier basé sur les classifications pour étendre celui-ci, la référence sera la bienvenues]}
+Unlike the first two families, such classifiers, built on contextual
 embeddings, can achieve fine-grained semantic resolution but only at the cost of
 substantial human labeling effort for every narrative of interest, and they do not
 generalize to a newly introduced narrative without retraining.
@@ -278,6 +283,22 @@ Our key contributions are:
           agreement with known historical events (Section~\ref{sec:application}).
 \end{itemize}
 
+\textcolor{ForestGreen}{
+It is not the first time algebra has been used in the space of embedding to remove biases or common effects. This has been notability done to remove gender biases of language models \autocite{dev2019attenuating,dawkins2024projective}. The main difference is that whereas such operations on gender bias has to pre-defined polarities to orthogonalize too (the vector of the ``he–she difference'' or a set of a gender-paired sentences), in the case of a collation of narratives the directions to orthogonalize to are only implicitly defined. 
+That is why we have to turn to the Stiefel manifold: looking for representative of narratives that are as close as the original as possible but as orthogonal to the rest of others as possible.
+}
+   
+% dawkins2024projective,
+% Dawkins, Hillary, Isar Nejadgholi, Daniel Gillis, and Judi McCuaig. "Projective methods for mitigating gender bias in pre-trained language models." In Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024), pp. 13079-13091. 2024.
+% https://arxiv.org/abs/2403.18803
+% Computes difference vectors between gender-paired sentences, applies PCA to obtain a gender subspace, then projects hidden states into its nullspace, with hard or soft variants.
+
+% dev2019attenuating
+% Dev, S. and Phillips, J., 2019, April. Attenuating bias in word vectors. In The 22nd international conference on artificial intelligence and statistics (pp. 879-887). PMLR.
+% https://proceedings.mlr.press/v89/dev19a/dev19a.pdf
+% Uses the he–she difference as a single bias vector and removes its projection.
+ 
+
 % -------------------------------------------------------
 \section{A Generative Model for Narrative Embeddings}
 \label{sec:model}
@@ -286,7 +307,7 @@ Our key contributions are:
 
 
 \subsection{Pure Narratives: an Idealized Abstraction}
-
+\label{sec:naratives:embedding}
 
 We take a \emph{narrative} to be an abstract idea, claim, or framing about the
 world: an assertion, an interpretation of events, or a story that can be told
@@ -305,6 +326,45 @@ vectors are only supports for them.
 However, by abuse of terminology, we will sometimes identify a narrative
 with its representation (either a text or a vector).
 
+\textcolor{red}{[CAL: illustration faut peut être choisir une typo pour les narratifs, si on met tout en italique ça peut être compliqué; il faut choisir entre (apr exemple): ``\emph{Welfare State Under Pressure}'' vs ``Welfare State Under Pressure'' vs {\sf\small Welfare State Under Pressure} vs {\sc Welfare State Under Pressure} (j'aime bien le dernier); j'ai fait une macro {\sf narr}]}
+
+{\color{ForestGreen}
+For instance, the left panel of Table \ref{tab:cosine_similarity} shows the cosine similarities (for modernBERT embeddings) of the following three English representations of 
+the narrative  \narr{Extreme Heat and Emergency, Policy Response}:
+\begin{enumerate}
+    \item \narr{\small Record-breaking temperatures across southern Europe this summer triggered unprecedented heatwaves, forcing governments to activate emergency climate plans and accelerate the transition toward renewable energy sources in order to meaningfully reduce carbon emissions and limit further global warming.}
+    \item \narr{\small Record-breaking temperatures across southern Europe this summer fueled unprecedented heatwaves, prompting governments to implement emergency climate measures and fast-track the adoption of renewable energy to curb carbon emissions and mitigate further global warming.}
+    \item \narr{\small Southern Europe faced extreme heat this summer, with record-breaking temperatures triggering a climate emergency and driving governments to intensify policy responses, accelerate the shift to clean energy, and implement measures to reduce carbon emissions and limit future global warming.}.
+\end{enumerate}
+Their pairwise similarities are high, it explains why vectors of embedding, despite they live in a high dimension (768 for modernBERT), can be used as algebraic representatives of the narrative itself.
+
+Nevertheless, if we take two other arbitratry narratives of \ref{app:narratives_illustration}:
+\begin{itemize}
+    \item[4.] \narr{\small NATO Eastern Flank and the Russia–Ukraine War}: \narr{The ongoing military conflict between Russia and Ukraine continues to destabilize the European geopolitical order, compelling NATO allies to reinforce their eastern flank with additional troops and to significantly increase national defense budgets in response to sustained and escalating Russian aggression.}
+    \item[5.] \narr{IMF  Forecasts  and  Global Growth Slowdown}: \narr{\small Global economic growth is decelerating at a concerning pace according to the latest International Monetary Fund projections, which identify trade tensions, rising public debt levels, and slowing emerging market performance as the primary drivers behind deteriorating worldwide economic prospects.}
+\end{itemize}
+The right panel of the same table show there pairwise cosine similarity is lower (around 0.92 in place of 0.96), but keeps very high. It is due to common English grammar, sentence building, etc. 
+Structural semantic similarities are hiding the underlying differences between narratives.
+
+This observation of apparent similarity justifies the following definition.
+}
+
+\begin{table}
+\caption{Pairwise Cosine Similarity Matrix (ModernBERT) for the narratives of the example inspired from  \ref{app:narratives_illustration}.}
+\label{tab:cosine_similarity}
+\centering
+\begin{tabular}{lrrr c| lrrr}
+\toprule
+ & Narrative 1 & Narrative 2 & Narrative 3 & \quad & & Narrative 1 & Narrative 4 & Narrative 5 \\
+\midrule
+Nar. 1 & 1.00 & 0.95 & 0.96 & & Nar. 1 & 1.00 & 0.92 & 0.93 \\
+Nar. 2 & 0.95 & 1.00 & 0.99 & & Nar. 4 & 0.92 & 1.00 & 0.91 \\
+Nar. 3 & 0.96 & 0.99 & 1.00 & & Nar. 5 & 0.93 & 0.91 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
 \paragraph{Collection of Pure Narratives}
 
 Rather than studying a single narrative in isolation, this paper is concerned with studying relative prevalence among several narratives. We accordingly introduce the notion of a \emph{collection of pure narratives}, whose representations live in the
@@ -318,9 +378,17 @@ is a collection of \emph{pure narratives} if the collection $(V_i)_{1 \le i \le 
 Pure narratives should be understood as an idealized abstraction rather than a text we expect to observe or write down directly: we do not claim that any collection of texts is an exact representation of a collection of pure narratives, and we make no attempt to
 produce one. What matters at this stage is only that such an orthonormal collection \emph{exists} in $\mathcal H$; Section~\ref{sec:ortho} then shows how to recover, from any (impure) list of narrative-representing texts, a collection of vectors that is a good practical proxy for it.
 
+{\color{ForestGreen}
+In principle a collection of pure narratives for our previous example of (1) \narr{Extreme Heat and Emergency, PolicyResponse}, (4) \narr{NATO Eastern Flank and the Russia–Ukraine War}, and (5) \narr{IMF Forecasts and Global Growth Slowdown} should have a right panel of Table \ref{tab:cosine_similarity} that is close to a diagonal of ones: they should be pairwise orthogonal (in the cosine similarity sense).
+}
 
 \subsection{A Generative Model on the Embedding Space}
 \label{sec:model:generative}
+
+\textcolor{ForestGreen}{
+We start by explaining and defining clearly the notion of \emph{prevalence} for pure narratives;
+in Section \ref{sec:naive-failure:prevalence} we show how to orthogonalize a family of non-pure narratives to use the same notions on any family of representatives of narratives.
+}
 
 Given a family of pure narratives of interest $(V_i)_{1\le i\le K}$, our goal is to study their relative prevalence within a corpus of texts. We introduce a probabilistic generative model for this
 purpose.
@@ -352,7 +420,7 @@ We introduce the random variable $X$ and assume that $X(\omega)$ decomposes as
     X(\omega) = \sum_{i=1}^K \alpha_i(\omega)\, V_i + \varepsilon(\omega).
 \end{equation}
 To keep the notation light, we drop the dependence on $\omega$:
-given a database of $N$ occurrences, we write $X_n := X(\omega_n)$,
+given a database of $N$ occurrences, \textcolor{red}{[CAL: c'est là qu'il faut introduire une mesure (on va prendre l'esperence suivant cette mesure) et un échantillon $(X_n)_n$ tiré de façon iid suivant cette loi (voir plus loin)]} we write $X_n := X(\omega_n)$,
 $\alpha_{i,n} := \alpha_i(\omega_n)$, $\varepsilon_n := \varepsilon(\omega_n)$,
 and $t_n := \tau(\omega_n)$, so that~\eqref{eq:generative} reads
 \begin{equation}
@@ -369,7 +437,7 @@ decomposition $X_n = X_n^\parallel + X_n^\perp$ with $X_n^\parallel \in
 \eqref{eq:generative:n} with $\alpha_{i,n} = V_i^\top X_n$ and $\varepsilon_n
 = X_n^\perp$.
 
-\paragraph{Qualitative interpretation.} If one considers a corpus of texts (for instance a news corpus) with $N$ occurrences, the collection $(X_n)_{1 \le n \le N}$ represents the corpus, more precisely, each $X_n$ is the vector embedding of a text (for instance of an article). The variable $\alpha_{i,n}$ indicates whether narrative $V_i$ is
+\paragraph{Qualitative interpretation.} If one considers a corpus of texts (for instance a corpus of News) with $N$ occurrences, the collection $(X_n)_{1 \le n \le N}$ represents the corpus, more precisely, each $X_n$ is the vector embedding of a text (for instance of an article). The variable $\alpha_{i,n}$ indicates whether narrative $V_i$ is
 present in text $n$. The residual $\varepsilon_n$ captures everything in the text unrelated to the
 $K$ narratives of interest: for instance, author style, secondary facts, or unmodeled topics. As it lies in $\mathcal V^\perp$, it carries no component along any narrative of interest.  
 
@@ -405,6 +473,8 @@ But, we leverage the properties of our model: the orthonormality of the $V_k$ an
       + \, \mathbb E\bigl[\underbrace{V_i^\top \varepsilon_n}_{=0} \mid \mathcal F_t\bigr]
     = p_i(t),
 \end{equation}
+\textcolor{red}{[CAL: je ne suis pas hyper fan de $\mathbb E\bigl[V_i^\top X_n \mid \mathcal F_t\bigr]$ (l'espérence est sur quoi?) \textbf{il faut  écrire $\mathbb E\bigl[V_i^\top X \mid \mathcal F_t\bigr]$, où $X\in$ notre corpus avec la distribution naturelle, le conditionnement fait la sélection des points (car iid)}]}
+
 
 This shows that $p_i(t)$ coincides with the conditional expectation of the observable
 projection $V_i^\top X_n$, which is what makes it estimable in practice.
@@ -419,6 +489,18 @@ projection $V_i^\top X_n$, which is what makes it estimable in practice.
 \end{equation}
 \end{proposition}
 
+{\color{ForestGreen}
+\begin{definition}[Prevalence of narratives in texts]
+\label{def:prevalence}
+The previous proposition gives a constructive definition of \emph{the prevalence of narrative $V_i$ in text $X$}, that is 
+\begin{equation}
+    \label{eq:def:prevalence}
+    \hat\alpha_i:=\mathbb E\bigl[V_i^\top X\bigr].
+\end{equation}
+\end{definition}
+This is a well defined notion and can be conditioned by a filtration to get \emph{the prevalence of narrative $V_i$ in a corpus of text at $t$}, that is given by equality (\ref{eq:esp:scalar}).
+Note that thanks to our model, the prevalence, that can be read as the contribution of the pure narrative $V_i$ to the text $X$, is nothing more than a scalar product, i.e. a cosine similarity. We show in Section \ref{sec:naive-failure:prevalence} how to extend this estimate to families of non-pure narratives.
+}
 
 \paragraph{Absolute frequency.}
 The absolute frequency of narrative $i$ at time $t$ jointly captures
@@ -427,8 +509,6 @@ narrative intensity and publication volume:
     \label{eq:abs_freq}
     q_i(t) := \mathbb E\bigl[V_i^\top X_n \cdot \mathbf 1_{\tau(\omega_n) = t}\bigr].
 \end{equation}
-
-
 
 \paragraph{Co-occurrence.}
 For $i,j\le K$, we define the co-occurrence of narratives $i$ and $j$ at time
@@ -481,7 +561,7 @@ This naturally leads to unbiased empirical estimators for the prevalence, the ab
     \hat p_{ij}(t) &= \frac{1}{n_t} \sum_{n\in\mathcal C_t} (V_i^\top X_n)(V_j^\top X_n).
 \end{align}
 
-\JAMM{Peut-être qu'on pourra supprimer ces preuves qui sont quasi immédiates}
+\JAMM{Peut-être qu'on pourra supprimer ces preuves qui sont quasi immédiates}\textcolor{red}{[CAL: ou peut juste les garder en appendix au cas où]}
 \paragraph{Unbiasedness of $\hat p_i(t)$.}
 Conditioning on $\mathcal F_t$:
 \begin{equation}
@@ -527,15 +607,24 @@ $p_{ij}(t)$:
 \section{Failure of the Naive Approach: why orthonormality matters}
 \label{sec:naive-failure}
 
-At this stage, one could ask what's the point in having the orthonormality assumption, and having designed a generative model for text embeddings. Indeed, let's return to our baseline objective: monitoring the relative prevalence of a collection of narratives $(V_1, \ldots, V_K)$ understood here in the
-abstract sense of Section~\ref{sec:model:generative}. 
+{\color{ForestGreen}
+In Section \ref{sec:naratives:embedding} we made the difference between \emph{representatives of narratives}, that are sentences describing in human language the targeted narrative, 
+and we are defined \emph{collections of pure narratives}, namely set of orthogonal narratives.
+In Section \ref{sec:model:generative} we have shown that is the straightforward to build unbiased estimates of the \emph{prevalence of narratives in a corpus of texts}.
 
-One could claim that a simple way to proceed would be to write down a textual representation of
+Nevertheless with have illustrated in the same Section \ref{sec:naratives:embedding} that representatives of different narratives (we took the example of (1) \emph{Extreme heat}, (2) \emph{Russia-Ukraine war} and (3) \emph{IMF Forecasts}) are not at all orthogonal: they have a lot in common due to the English structure and the common semantic to be used to describe clearly any narrative in one short paragraph.
+
+This section show why not using a collection of pure narratives would fail at estimating the prevalence and other quantities of interest. Not having access to a pure version of the collection of narratives prevent to simply estimate the importance (or joined importance) of narratives of interest in texts.
+}
+\st{At this stage, one could ask what's the point in having the orthonormality assumption, and having designed a generative model for text embeddings. Indeed, let's return to our baseline objective: monitoring the relative prevalence of a collection of narratives $(V_1, \ldots, V_K)$ understood here in the
+abstract sense of Section} ~\ref{sec:model:generative}. 
+
+\st{One could claim that a simple way to proceed would be to write down a textual representation of
 each $V_i$ and pass it through a language model, obtaining candidate vectors $N_i \in \mathcal H$. Empirically, such candidates do not form an orthonormal family: normalizing them to unit norm is immediate, but nothing
 in how language models produce embeddings guarantees that they come out
 pairwise orthogonal.  
 
-The theoretical framework developed in
+In other words,} the theoretical framework developed in
 Section~\ref{sec:model} lets us establish precisely why this approach fails. We quantify it both at the level of
 prevalence (a first-moment quantity, Section~\ref{sec:naive-failure:prevalence})
 and at the level of co-occurrence,
@@ -544,14 +633,17 @@ Section~\ref{sec:naive-failure:cooccurrence}).
 \subsection{Prevalence}
 \label{sec:naive-failure:prevalence}
 
-\TODO{ Même question: garde-t-on les preuves ici ou en annexe }
+\TODO{ Même question: garde-t-on les preuves ici ou en annexe }\textcolor{red}{[CAL: je suis d'accord, à transferer en appendix]}
 
 Let $(N_i)_{1\le i \le K} \in \mathcal{H}$ be a family of unit-vector embeddings that represents our studied narratives. The family is not asssumed to be orthogonal. Analogously to Section~\ref{sec:model:prevalence}, the
-naive approach measures the prevalence of $N_i$ at time $t$ as
+\st{naive} \textcolor{Orange}{natural} approach measures the prevalence of $N_i$ at time $t$ as
 \begin{equation}
     \label{eq:naive-prevalence}
     \pi_{N_i}(t) := \mathbb E\bigl[N_i^\top X_n \mid \mathcal F_t\bigr], \qquad n \in \mathcal C_t.
 \end{equation}
+{\color{red}[CAL: attention: même remarque que plus haut, \textbf{il faut remplacer $X_n$ par $X$} car l'espérance est sur la mesure dans l'ensemble des textes]
+\medskip}
+
 Since $N_i$ and $X_n$ are both unit-norm, $N_i^\top X_n$ is exactly their
 cosine similarity; $\pi_{N_i}(t)$ is then the average cosine similarity
 between narrative $i$'s candidate embedding and the articles published
@@ -653,28 +745,30 @@ exactly. This is just what we had in Proposition~\ref{prop:cooccurrence-projecti
 When $W_i,W_j$ are not pure, \eqref{eq:naive-cooccurrence-decomp} shows that
 $M_{ij}(t)$ departs from $p_{ij}(t)$ through two distinct mechanisms, each
 sufficient on its own to bias the naive measure.
+\begin{itemize}
+    \item \emph{Signal leakage.}\textcolor{red}{[CAL: on veut dire ``signal leakage'' or ``narrative leakage''?]} The signal term mixes \emph{every} entry of the true
+    co-occurrence matrix $(p_{kl}(t))_{k,l}$, not just $p_{ij}(t)$ itself. In
+    particular, even if narratives $i$ and $j$ never truly co-occur
+    ($p_{ij}(t)=0$), $M_{ij}(t)$ can be large  because $W_i$ and $W_j$ both
+    carry a nonzero loading on a shared third narrative $k$ ($c_{ik}\ne0$ and
+    $c_{jk}\ne0$): the naive approach then reports an artificial
+    synchronization between two narratives that share nothing in the corpus.
+    
+    {\color{red}[CAL: je me demande s'il ne faudrait pas \textbf{donner un exemple concret}: these representatives of two distinct narratives (... for narrative A and ... for narrative B) nevertheless carry common concepts like...]}
 
-\emph{Signal leakage.} The signal term mixes \emph{every} entry of the true
-co-occurrence matrix $(p_{kl}(t))_{k,l}$, not just $p_{ij}(t)$ itself. In
-particular, even if narratives $i$ and $j$ never truly co-occur
-($p_{ij}(t)=0$), $M_{ij}(t)$ can be large  because $W_i$ and $W_j$ both
-carry a nonzero loading on a shared third narrative $k$ ($c_{ik}\ne0$ and
-$c_{jk}\ne0$): the naive approach then reports an artificial
-synchronization between two narratives that share nothing in the corpus.
-
-\emph{Semantic Noise} The noise term, $\sigma_\varepsilon^2\,\eta_i^\top\eta_j$,
-is an independent second source of artificial co-variation. Even a candidate pair with
-perfectly targeted signal ($c_{ik}=\delta_{ik}$, $c_{jl}=\delta_{jl}$, zero
-leakage onto any other narrative) still registers a spuriously elevated
-$M_{ij}(t)$ as soon as their residuals $\eta_i,\eta_j$ 
-(whatever in each candidate's textual representation is unrelated to any
-narrative, e.g.\ shared vocabulary or phrasing used to describe both) happen
-to be non-orthogonal. Since $\sigma_\varepsilon^2>0$, any $\eta_i^\top\eta_j>0$
-mechanically inflates $M_{ij}(t)$ above the true co-occurrence, regardless of
-whether the narratives themselves ever co-occur in the corpus: two narratives
-can appear artificially correlated purely because their candidate
-descriptions happen to be phrased in a similar style.
-
+    \item \emph{Semantic Noise} The noise term, $\sigma_\varepsilon^2\,\eta_i^\top\eta_j$,
+    is an independent second source of artificial co-variation. Even a candidate pair with
+    perfectly targeted signal ($c_{ik}=\delta_{ik}$, $c_{jl}=\delta_{jl}$, zero
+    leakage onto any other narrative) still registers a spuriously elevated
+    $M_{ij}(t)$ as soon as their residuals $\eta_i,\eta_j$ 
+    (whatever in each candidate's textual representation is unrelated to any
+    narrative, e.g.\ shared vocabulary or phrasing used to describe both) happen
+    to be non-orthogonal. Since $\sigma_\varepsilon^2>0$, any $\eta_i^\top\eta_j>0$
+    mechanically inflates $M_{ij}(t)$ above the true co-occurrence, regardless of
+    whether the narratives themselves ever co-occur in the corpus: two narratives
+    can appear artificially correlated purely because their candidate
+    descriptions happen to be phrased in a similar style.
+\end{itemize}
 
 The naive approach therefore fails on two distinct counts. At the level of
 prevalence, it conflates a narrative's true presence with leakage from every
@@ -695,11 +789,17 @@ what the procedure of Section~\ref{sec:ortho} constructs.
 \label{sec:ortho}
 % -------------------------------------------------------
 
+{\color{ForestGreen}
+The previous section demonstrates that \emph{arbitrary representatives of narratives do not have enough good properties to enable to estimate their prevalence in texts}.
+Nevertheless the modelling angle we exposed in Section \ref{sec:model:generative} allows to \emph{establish an orthonormalization procedure allowing to recover a nice candidate collection of pure narratives}.
+It will be nice in the sense: it faithfully represents the collection of narratives spanned by chosen representatives, and it is pure.
+}
+
 \subsection{The Problem: Correlated Narrative Vectors}
 \label{sec:ortho:problem}
 
 Let $\{N_i\}_{i=1}^{n} \subset \R^d$ denote the embedding vectors of $n$ narratives,
-obtained by passing their textual descriptions through a language model.
+obtained by passing their textual \st{descriptions} \textcolor{Orange}{representatives} through a language model.
 A fundamental difficulty is that narratives written in the same language,
 sharing a journalistic style and treating related themes, yield representations
 that are highly correlated in the embedding space.
@@ -713,10 +813,10 @@ rather than the relative dominance of specific narratives.
 
 The goal is therefore to construct representative vectors $\{V_i\}_{i=1}^{n}$
 that satisfy:
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Faithfulness}: each $V_i$ is as close as possible to $N_i^* = N_i / ||N_i||$;
     \item \textbf{Orthonormality}: $V_i^\top V_j = \delta_{ij}$.
-\end{enumerate}
+\end{itemize}
 
 \subsection{Monotonous Orthogonalization and Its Limits}
 \label{sec:ortho:gram}
@@ -735,9 +835,9 @@ optimality and order-independence.
 \subsection{Global Procrustes Alignment and Its Limits}
 \label{sec:ortho:procrustes}
 
-\TODO{citer une source pour procruste ? c'est visiblement un résultat très classique}
+\TODO{\st{citer une source pour procruste ? c'est visiblement un résultat très classique}}\textcolor{Orange}{\bf $\to$ CAL: oui j'ai mis une ref}
 
-A natural alternative is the Orthogonal Procrustes solution, which finds the matrix $V$ that minimizes the global Frobenius norm $||N^* - V||_F^2$. While this admits an exact closed-form solution via Singular Value Decomposition (SVD), it maximizes the \emph{sum} of alignments rather than the \emph{minimum}. In the context of highly correlated narratives, Procrustes optimization can sacrifice the representation of minority narratives: it allows individual vectors $V_i$ to be pushed far from $N_i^*$ if doing so slightly improves the overall global alignment. To prevent any single narrative from being discarded or severely distorted, we instead require a max-min formulation.
+A natural alternative is the Orthogonal Procrustes solution \textcolor{ForestGreen}{\autocite{schonemann1966generalized}}, which finds the matrix $V$ that minimizes the global Frobenius norm $||N^* - V||_F^2$. While this admits an exact closed-form solution via Singular Value Decomposition (SVD), it maximizes the \emph{sum} of alignments rather than the \emph{minimum}. In the context of highly correlated narratives, Procrustes optimization can sacrifice the representation of minority narratives: it allows individual vectors $V_i$ to be pushed far from $N_i^*$ if doing so slightly improves the overall global alignment. To prevent any single narrative from being discarded or severely distorted, we instead require a max-min formulation.
 
 
 \subsection{Global Optimization on the Stiefel Manifold}
@@ -772,7 +872,7 @@ i.e.\ $V$ belongs to the \emph{Stiefel manifold}~\autocite{boumal2023optimizatio
     \St(n,d) = \bigl\{V \in \R^{n \times d} : V V^\top = I_n\bigr\}.
 \end{equation}
 
-\TODO{Doit-on garder le détail de la résolution du pb d'optimisation dans le texte ou le mettre dans l'annexe.}
+\TODO{Doit-on garder le détail de la résolution du pb d'optimisation dans le texte ou le mettre dans l'annexe.}\textcolor{Orange}{\bf $\to$ CAL: oui faisons ça}
 
 Because the objective $\min_i(N_i^{*\top} V_i)$ is non-differentiable,
 we approximate it with the smooth \emph{softmin} parameterized by temperature $\tau > 0$:
@@ -827,7 +927,8 @@ satisfied at every iteration while converging to a local optimum of~\eqref{eq:ma
 
 We test our procedure with narratives that can be found in \ref{app:narratives_illustration}. The four panels of Figure \ref{fig:cosine_matrix1} and \ref{fig:cosine_matrix2} illustrate the behavior of the original narrative embeddings and their orthogonalized counterparts under both the Stiefel-based procedure and the classical Gram-Schmidt algorithm.
 
-Panel (a) displays the cosine similarity matrix between the raw narrative embeddings. A striking feature is the overall high level of correlation across all narrative pairs, reflecting the anisotropy of the embedding space produced by \textit{ModernBERT}. Diagonal blocks are systematically darker, confirming that narratives belonging to the same thematic chapter are more strongly correlated with one another than with narratives from other chapters. For instance, \textit{"AI Disruption of Labor Markets"} and \textit{"Big Tech Race and Regulatory Pushback"} exhibit a cosine similarity of 0.95, whereas the similarity between \textit{"AI Disruption of Labor Markets"} and \textit{"Financial Market Volatility and Fed Signaling"} is lower (with cosine similarity of 0.91). This intra-chapter cohesion validates the semantic consistency of the narrative groupings.
+Panel (a) displays the cosine similarity matrix between the raw narrative embeddings. A striking feature is the overall high level of correlation across all narrative pairs, reflecting the anisotropy of the embedding space produced by \textit{ModernBERT}. Diagonal blocks are systematically darker, confirming that narratives belonging to the same thematic chapter are more strongly correlated with one another than with narratives from other chapters. For instance, \textit{"AI Disruption of Labor Markets"} and \textit{"Big Tech Race and Regulatory Pushback"} exhibit a cosine similarity of 0.95, whereas the similarity between \textit{"AI Disruption of Labor Markets"} and \textit{"Financial Market Volatility and Fed Signaling"} is lower (with cosine similarity of 0.91). This intra-chapter cohesion validates the semantic consistency of the narrative groupings. 
+\textcolor{ForestGreen}{The representative naratives take as examples in Section \label{sec:naratives:embedding} come from this list (see \ref{app:narratives_illustration}).}
 
 Panel (b) demonstrates the success of the Stiefel optimization. The resulting representative matrix is fully orthogonal, with pairwise cosine similarities equal to zero across all narrative pairs. Crucially, this orthogonality holds not only across thematic chapters but also within chapters: \textit{"Extreme Heat and Emergency Policy Response"} is equally orthogonal to \textit{"International Climate Commitments Under Pressure"} and \textit{"US China Rivalry and Indo Pacific"}. The procedure thus isolates the idiosyncratic component of each narrative, stripping away both cross-chapter and intra-chapter shared variance. What remains is the semantic signal that is strictly proper to each narrative, independently of all others.
 
@@ -875,28 +976,27 @@ Gram-Schmidt representatives, revealing a severe order-dependent distortion: the
 %    C'est à dire que l'écart est plus grand lorsqu'on utilise les narratifs purs que lorsque ce n'est pas le cas.
 %\end{enumerate}
 %}
-
-
-
-
-
-
-
-
-
-
-
 \bigskip 
 
 
 \section{Experiments and Validation on a Dataset}
 \label{sec:application}
-\textcolor{ForestGreen}{\bf [CAL: expliquer qu'on utilise cette base car elle va permettre le contrefactuel + mettre en place le framework probabiliste pour les tests]}
-\textcolor{ForestGreen}{\bf [CAL: alternatives à modernBERT]}
-\JAMM{première recherche: https://chatgpt.com/share/69e58d30-f2c4-8329-aa4f-5682054e5775}
+
+\textcolor{red}{[je propose qu'on laisse tomber ces deux points]}
+\textcolor{ForestGreen}{[\st{CAL: expliquer qu'on utilise cette base car elle va permettre le contrefactuel + mettre en place le framework probabiliste pour les tests}]}
+\textcolor{ForestGreen}{[\st{CAL: alternatives à modernBERT}]}
+\JAMM{\st{première recherche: https://chatgpt.com/share/69e58d30-f2c4-8329-aa4f-5682054e5775}}
 
 
-The objective of this empirical study is to validate the methodology introduced in the previous sections from two complementary perspectives. More precisely we will compare those two approaches: 
+The objective of this empirical study is to validate the methodology introduced in the previous sections \textcolor{ForestGreen}{on a labelled dataset} from two complementary perspectives. 
+{\color{ForestGreen}
+It is not obvious to find a dataset of text that has labels compatibles with narratives; we found the \emph{News Category Dataset} (described in detail in Section \ref{sec:application:data}).
+What we need is a corpus of texts classified in theme corresponding to potential narratives so that we can check:
+our orthogonalization procedure produce time series of prevalences that ``make sense'' (that is a qualitative procedure conducted in Section \ref{sec:application:qualitative}), 
+by choosing narratives that are meant to be disjoint with respect to the labelled themes, we can check our orthonormalization procedure respect this \emph{disjunction} (typically orthogonalized narratives in the theme ``Entertainment'' does not align with orthogonalized narratives in the theme ``Politics'').
+}
+
+More precisely we will compare those two approaches: 
 \begin{itemize}
     \item We use the embeddings that directly encodes the text representations of the studied collection of narratives. We denote them as $(N_i)_i$ and we will sometimes refer to them as \og raw narratives \fg. 
     \item We use the vectors obtained after applying the procedure described in \ref{sec:ortho:stiefel}. We denote them as $(V_i)_i$ and we will sometimes refer to them as \og pure narratives \fg or \og orthogonalized narratives \fg. 
@@ -910,23 +1010,31 @@ We want to check that:
 \end{itemize}
 
 
-To this end, we rely on the \emph{News Category Dataset}~\autocite{misra2022news}, whose manually assigned categories provide a natural counterfactual framework. 
+\st{To this end, we rely on the \emph{News Category Dataset}, %~\autocite{misra2022news}, 
+whose manually assigned categories provide a natural counterfactual framework.}
 
 \subsection{Dataset and Experimental Setup}
 \label{sec:application:data}
 
 \paragraph{Dataset.}
-We use the \emph{News Category Dataset}~\autocite{misra2022news}, which contains approximately $210\,000$ headlines published by \emph{HuffPost} between 2012 and 2022. Since the archive becomes sparse after May 2018, we restrict the analysis to the 2012--2018 period, resulting in approximately $200\,000$ articles.
+We use the \emph{News Category Dataset}~\autocite{misra2022news}, which contains approximately $210\,000$ headlines published by \emph{HuffPost} between 2012 and 2022. 
+This dataset has been for instance used by \autocite{fewshot2024augmentation} for evaluating few-shot selection strategies in LLM-based text augmentation, 
+% https://ar5iv.labs.arxiv.org/html/2410.10756
+\autocite{mediabias2024generated} to fine-tunes RoBERTa classifiers.
+% https://ar5iv.labs.arxiv.org/html/2406.10773
 
-Among all available categories, we retain four sufficiently represented chapters:
-\emph{Politics} ($32\,739$ articles), \emph{Entertainment} ($16\,058$),
+\textcolor{ForestGreen}{We perform descriptive statistics on this dataset to keep its main categories over the 42 available;} it left us with 4 main categories: \st{Among all available categories, we retain four sufficiently represented themes (that we will use as ``Chapters'' in the terminology of the previous section):} \emph{Politics} ($32\,739$ articles), \emph{Entertainment} ($16\,058$),
 \emph{Travel} ($9\,887$), and \emph{Parenting} ($8\,677$ articles). These four chapters naturally match the narrative groups introduced below and provide labeled subsets that can be exploited for validation.
+Since the archive becomes sparse after May 2018, we restrict the analysis to the 2012--2018 period, resulting in approximately $200\,000$ articles.
+
+\textcolor{ForestGreen}{As shown in Table \ref{tab:resampled}: Entertainment and Politics are the ones stationary enough to test our temporal conditioning, and we keep Parenting and Travel for comparison.}
+
+
+\TODO{\st{Ici, il y a sans doute un commentaire à faire sur les catégories (les seules ok à mon avis c'est entertainment et politics) - ce qui n'empêche pas d'utiliser les autres si on moyenne sur toute la période}}\textcolor{ForestGreen}{[CAL: oui j'a fait ça]}
 
 
 \paragraph{Temporal resampling.}
 The raw dataset is highly unbalanced over time, particularly for the Politics category during the 2016 presidential campaign. To avoid interpreting variations in publication volume as changes in narrative prevalence, we perform a temporal resampling that enforces a constant weekly number of articles while preserving the relative proportions across categories.Table~\ref{tab:resampled} reports the resulting distribution.
-
-\TODO{Ici, il y a sans doute un commentaire à faire sur les catégories (les seules ok à mon avis c'est entertainment et politics) - ce qui n'empêche pas d'utiliser les autres si on moyenne sur toute la période}
 
 \begin{table}[hbt!]
 \begin{threeparttable}
@@ -990,14 +1098,14 @@ Travel
 \end{threeparttable}
 \end{table}
 
-The raw narrative embeddings are then orthogonalized using the Stiefel optimization procedure described in Section~\ref{sec:ortho}, producing the corresponding \textit{collection of pure narratives} $(V_i)_i$.
+The $(N_i)_i$ raw narrative embedding are then orthogonalized using the Stiefel optimization procedure described in Section~\ref{sec:ortho}, producing the corresponding \textit{collection of pure narratives} $(V_i)_i$.
 
 \subsection{First qualitative results}
 \label{sec:application:qualitative}
 
-We first perform a qualitative comparison between the prevalence estimators obtained using the raw narrative vectors $N_i$ and their orthogonalized representatives $V_i$.
+We first perform a qualitative comparison between the prevalence estimators obtained using the raw narrative vectors and their orthogonalized representatives.
 
-To facilitate visual interpretation, we restrict this analysis to the Politics and Entertainment chapters over the 2014--2018 period, where both categories contain a sufficiently balanced number of observations. The displayed curves correspond to an exponential moving average of the estimator $\hat p_i(t)$ introduced in Section~\ref{sec:model}.
+To facilitate visual interpretation that can be done on Figure \ref{fig:ema_comparison}, we restrict this analysis to the Politics and Entertainment chapters over the 2014--2018 period, where both categories contain a sufficiently balanced number of observations. The displayed curves correspond to an exponential moving average of the estimator $\hat p_i(t)$ introduced in Section~\ref{sec:model}.
 
 
 
@@ -1013,32 +1121,38 @@ To facilitate visual interpretation, we restrict this analysis to the Politics a
 
 The contrast between the two approaches is immediate. Under the raw narrative vectors, the prevalence series evolve almost perfectly synchronously, illustrating the leakage phenomenon anticipated in Section~\ref{sec:model}: when the prevalence of an unrelated but semantically connected narrative rises, the naive prevalence indicator computed on raw narratives increases mechanically along with it. Pure narratives, by contrast, produce clearly differentiated temporal trajectories, with each of them now exhibiting its own distinctive dynamics.
 
-The clearest visual illustration of this contrast occurs between January 2017 and January 2018, when a pronounced bump appears in the raw prevalence series of virtually every narrative. Under the purified representation, this bump is observed almost exclusively in the \emph{Welfare State Under Pressure} narrative, the only one for which it plausibly reflects genuine content rather than a shift shared indiscriminately across the corpus. This single episode captures the practical interest of orthogonalization: without it, an apparent surge in any given narrative could just as easily be an artifact of another, unrelated narrative's rise. This pattern is consistent with the historical record, as the early months of the Trump administration were marked by sustained legislative pressure on the social safety, most notably through repeated attempts to repeal the Affordable Care Act (Obamacare).
+The clearest visual illustration of this contrast occurs between January 2017 and January 2018, when a pronounced bump appears in the raw prevalence series of virtually every narrative. Under the purified representation, this bump is observed almost exclusively in the \narr{Welfare State Under Pressure} narrative, the only one for which it plausibly reflects genuine content rather than a shift shared indiscriminately across the corpus. 
+\emph{This single episode captures the practical interest of orthogonalization: without it, an apparent surge in any given narrative could just as easily be an artifact of another, unrelated narrative's rise}. 
+This pattern is consistent with the historical record, as the early months of the Trump administration were marked by sustained legislative pressure on the social safety, most notably through repeated attempts to repeal the Affordable Care Act (Obamacare).
 
-The observed behavior is also consistent with the historical context used to design the narratives. The political narratives were deliberately chosen to capture the rise of Donald Trump's presidential campaign and its associated political themes. Accordingly, the prevalence of the narratives \emph{Trump as Disruptor and Institutional Stress} and \emph{Culture War and Identity Conflict} increases steadily throughout the campaign and reaches its highest levels around the 2016 election. This evolution is qualitatively consistent with the growing importance of these themes in the political debate.
+
+
+The observed behavior is also consistent with the historical context used to design the narratives. The political narratives were deliberately chosen to capture the rise of Donald Trump's presidential campaign and its associated political themes. Accordingly, the prevalence of the narratives \narr{Trump as Disruptor and Institutional Stress} and \narr{Culture War and Identity Conflict} increases steadily throughout the campaign and reaches its highest levels around the 2016 election. This evolution is qualitatively consistent with the growing importance of these themes in the political debate.
 
 Conversely, the Entertainment narratives were intentionally designed to represent long-term structural trends rather than isolated historical events. Their estimated prevalence therefore remains comparatively stable over time, exhibiting only moderate fluctuations. The resulting time series are thus coherent with the expected temporal behavior of the corresponding narratives.
 
 
 
-\subsection{Co-variation, semantic specificity and rupture tests}
-\JAMM{TO DO: changer le titre}
+\subsection{From Qualitative to Quantitative Virtues of Stiefel Orthonormalizaton}
+\JAMM{\st{TO DO: changer le titre}}\textcolor{red}{[CAL: c'est fait]}
 \label{sec:application:quantitative}
 
 We next evaluate the proposed methodology through three complementary quantitative experiments.
 
-\paragraph{Reduction of artificially high co-variation}
+\subsubsection{Reduction of artificially high co-variation}
 We first observe qualitatively that the prevalence curves within the political and Entertainment subsets of narratives evolve almost synchronously. We now turn to quantifying this phenomenon across the full set of narratives under study.
 
 We use the metric introduced in Section~\ref{sec:model}:
+\textcolor{red}{[CAL: j'ai enlevé les $n$ (on voit bien qu'il y avait un problème)]}
 \[
-M_{ij}(t) := \mathbb{E}\bigl[(X_n^\top W_i)(X_n^\top W_j)\mid\mathcal{F}_t\bigr], \qquad n\in\mathcal{C}_t.
+M_{ij}(t) := \mathbb{E}\bigl[(X^\top W_i)(X^\top W_j)\mid\mathcal{F}_t\bigr].
+% M_{ij}(t) := \mathbb{E}\bigl[(X_n^\top W_i)(X_n^\top W_j)\mid\mathcal{F}_t\bigr], \qquad n\in\mathcal{C}_t.
 \]
 As discussed there, for a collection of raw, non-orthogonalized narratives, two distinct effects artificially inflate this covariation: signal leakage and the correlation induced by the noise term. We therefore assess whether orthogonalization produces a sizable reduction in covariation. Time is discretized weekly: for each pair $(i,j)$ we compute $M_{ij}(t)$ and average it over the entire study period.
 
 \begin{table}[ht]
 \centering
-\begin{tabular}{lcc}
+\begin{tabular}{lrr}
 \toprule
  & N (raw) & V (purified) \\
 \midrule
@@ -1055,7 +1169,7 @@ max & 75.546 & 8.343 \\
 
 The empirical results strongly support this prediction: as reported in Table~\ref{tab:covariation_stats}, pairwise covariation scores computed from the raw narrative vectors are, on average, approximately one order of magnitude larger than those obtained after orthogonalization.
 
-\paragraph{Semantic specificity.}
+\subsubsection{Semantic specificity}
 
 The second validation exercise aims to verify that purified representatives preserve the semantic meaning of the original narratives.
 
@@ -1115,13 +1229,13 @@ More importantly, if orthogonalization successfully removes semantic information
 
 \begin{table}[htbp]
 \centering
-\caption{Sensitivity analysis: 1000 bootstrap draws, 100\% of articles, 95\% CI for $\Delta^{i}(V_{i})$,$\Delta^{i}(N_{i})$, and $\Delta_{\text{gain}} = \Delta^i(V_i) - \Delta^i(N_i)$}
+\caption{Sensitivity analysis: 1000 bootstrap draws, 100\% of articles, 95\% CI for $\Delta^{i}(V_{i})$, $\Delta^{i}(N_{i})$, and $\Delta_{\text{gain}} = \Delta^i(V_i) - \Delta^i(N_i)$. Having all $\Delta^{i}(V_{i})\geq 0$ is compatible with our theory, whereas the only occurrences of unexpected $\Delta_{\text{gain}}$, i.e. negative values, are in \textcolor{red}{red}.}
 \label{tab:sensitivity_analysis}
 \small
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llccc}
+\begin{tabular}{llrrr}
 \toprule
 \textbf{Chapter} &
 \textbf{Narrative} &
@@ -1131,101 +1245,112 @@ $\boldsymbol{\Delta_{\text{gain}}}$ \\
 \midrule
 Politics &
 Trump as disruptor and institutional stress &
-$0.0019$ [0.0015, 0.0023] &
-$0.0377$ [0.0374, 0.0381] &
-$0.0358$ [0.0353, 0.0363] \\
+$0.0019\, [0.0015, 0.0023]$ &
+$0.0377\, [0.0374, 0.0381]$ &
+$0.0358\, [0.0353, 0.0363]$ \\
 
 Politics &
 Culture war and identity conflict &
-$-0.0002$ [-0.0006, 0.0003] &
-$0.0312$ [0.0309, 0.0316] &
-$0.0314$ [0.0309, 0.0319] \\
+$-0.0002\, [-0.0006, 0.0003]$ &
+$0.0312\, [0.0309, 0.0316]$ &
+$0.0314\, [0.0309, 0.0319]$ \\
 
 Politics &
 Welfare state under press &
-$-0.0053$ [-0.0058, -0.0048] &
-$0.0084$ [0.0078, 0.0090] &
-$0.0137$ [0.0134, 0.0141] \\
+$-0.0053\, [-0.0058, -0.0048]$ &
+$0.0084\, [0.0078, 0.0090]$ &
+$0.0137\, [0.0134, 0.0141]$ \\
 
 Entertainment &
 Entertainment as political resistance &
-$-0.0145$ [-0.0151, -0.0139] &
-$0.0062$ [0.0058, 0.0066] &
-$0.0207$ [0.0203, 0.0210] \\
+$-0.0145\, [-0.0151, -0.0139]$ &
+$0.0062\, [0.0058, 0.0066]$ &
+$0.0207\, [0.0203, 0.0210]$ \\
 
 Entertainment &
 Franchise nostalgia and serial dominance &
-$-0.0107$ [-0.0112, -0.0101] &
-$0.0207$ [0.0202, 0.0211] &
-$0.0313$ [0.0309, 0.0318] \\
+$-0.0107\, [-0.0112, -0.0101]$ &
+$0.0207\, [0.0202, 0.0211]$ &
+$0.0313\, [0.0309, 0.0318]$ \\
 
 Entertainment &
 Celebrity image management in the social media... &
-$-0.0153$ [-0.0159, -0.0148] &
-$0.0054$ [0.0050, 0.0058] &
-$0.0207$ [0.0202, 0.0212] \\
+$-0.0153\, [-0.0159, -0.0148]$ &
+$0.0054\, [0.0050, 0.0058]$ &
+$0.0207\, [0.0202, 0.0212]$ \\
 
 Parenting &
 The overwhelmed modern parent &
-$0.0253$ [0.0249, 0.0256] &
-$0.0118$ [0.0114, 0.0123] &
-$-0.0134$ [-0.0139, -0.0129] \\
+$0.0253\, [0.0249, 0.0256]$ &
+$0.0118\, [0.0114, 0.0123]$ &
+\color{red}$-0.0134\, [-0.0139, -0.0129]$ \\
 
 Parenting &
 Intensive and expert guided parenting &
-$0.0287$ [0.0283, 0.0291] &
-$0.0302$ [0.0297, 0.0308] &
-$0.0015$ [0.0010, 0.0020] \\
+$0.0287\, [0.0283, 0.0291]$ &
+$0.0302\, [0.0297, 0.0308]$ &
+$0.0015\, [0.0010, 0.0020]$ \\
 
 Parenting &
 Raising children in a politicized society &
-$0.0244$ [0.0240, 0.0248] &
-$0.0174$ [0.0171, 0.0178] &
-$-0.0070$ [-0.0073, -0.0066] \\
+$0.0244\, [0.0240, 0.0248]$ &
+$0.0174\, [0.0171, 0.0178]$ &
+\color{red}$-0.0070\, [-0.0073, -0.0066]$ \\
 
 Travel &
 Experiential and transformational travel &
-$0.0251$ [0.0246, 0.0257] &
-$0.0298$ [0.0293, 0.0304] &
-$0.0047$ [0.0042, 0.0052] \\
+$0.0251\, [0.0246, 0.0257]$ &
+$0.0298\, [0.0293, 0.0304]$ &
+$0.0047\, [0.0042, 0.0052]$ \\
 
 Travel &
 Travel optimization and consumer strategy &
-$0.0279$ [0.0274, 0.0285] &
-$0.0415$ [0.0410, 0.0420] &
-$0.0135$ [0.0130, 0.0141] \\
+$0.0279\, [0.0274, 0.0285]$ &
+$0.0415\, [0.0410, 0.0420]$ &
+$0.0135\, [0.0130, 0.0141]$ \\
 
 Travel &
 Aesthetic and instagrammable destinations &
-$0.0297$ [0.0293, 0.0303] &
-$0.0452$ [0.0446, 0.0458] &
-$0.0155$ [0.0150, 0.0160] \\
+$0.0297\, [0.0293, 0.0303]$ &
+$0.0452\, [0.0446, 0.0458]$ &
+$0.0155\, [0.0150, 0.0160]$ \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-The results are satisfactory: every chapter exhibits $\Delta^i(V_i) > 0$, whereas the Entertainment chapter and two narratives of Politics chapter have $\Delta^i(N_i) < 0$. Regarding $\Delta_{\text{gain}}$, it is positive for three chapters out of four.
+The results in Table \ref{tab:sensitivity_analysis} are satisfactory: every chapter exhibits $\Delta^i(V_i) > 0$ \textcolor{red}{[CAL: répéter ce que ça veut dire]}. The Entertainment chapter and two narratives of Politics chapter have $\Delta^i(N_i) < 0$. Regarding $\Delta_{\text{gain}}$, it is positive for three chapters out of four.
+\textcolor{red}{[CAL: répéter ce que ça veut dire]}
 
-\paragraph{Narrative specificity of detected ruptures}
+\subsubsection{Narrative specificity of detected ruptures}
 
 We now quantify the qualitative observation made above: ruptures detected on raw narrative representations tend to be shared across many, otherwise unrelated, narratives, whereas ruptures detected on purified representations are largely specific to a single narrative.
 
-For a narrative representation $M \in \{N_i, V_i\}$ and each candidate date $t$, let $\mathcal{B}_t$ and $\mathcal{A}_t$ denote the sets of articles published, respectively, in the 90-day window preceding and following $t$. Writing $Q_n(M) = X_n^\top M$ for the projected score of article $n$, we test, at every candidate date $t$,
+{\color{red}
+[CAL: je trouve que c'est trop compliqué; par besoin de $Q(M)$ je pense  (et il y a encore le problème des $n$, je mettrai qq chose comme:]}\\
+{\color{Orange}
+We define a rupture by the rejection by a two-sided Welch $t$-test of the null hypothesis:\footnote{Because this test is repeated over hundreds of candidate dates, the resulting $p$-values are corrected for multiple testing using the Benjamini-Hochberg FDR procedure; consecutive significant dates are then grouped into a single detected rupture} ``\emph{the prevalence of the narrative $M$ in News before $t$ is statistically not different from the prevalence of the narrative $M$ in News after $t$}''.
+We define $\mathcal{B}_t$ and $\mathcal{A}_t$ a windows of 90 days respectively before and after $t$ and we test, on the raw narratives $N$ and on the pure narratives $V$ the hypothesis at each date $t$:
+\[
+H_0(t, M) : \mathbb{E}\bigl[X^\top M \mid X \in \mathcal{B}_t\bigr] = \mathbb{E}\bigl[X^\top M \mid X \in \mathcal{A}_t\bigr].
+\]
+It means that we obtain one time series $H_0(t, N_i)$ for each raw narrative $N_i$ (upper panel of Figure \ref{fig:rupture_comparison}) and one time series $H_0(t, V_i)$ for each corresponding pure narrative $V_i$ (lower panel of Figure \ref{fig:rupture_comparison}).
+}
+\st{For a narrative representation $M \in \{N_i, V_i\}$ and each candidate date $t$, let $\mathcal{B}_t$ and $\mathcal{A}_t$ denote the sets of articles published, respectively, in the 90-day window preceding and following $t$. Writing $Q_n(M) = X_n^\top M$ for the projected score of article $n$, we test, at every candidate date $t$,}
 \[
 H_0 : \mathbb{E}\bigl[Q_n(M) \mid n \in \mathcal{B}_t\bigr] = \mathbb{E}\bigl[Q_n(M) \mid n \in \mathcal{A}_t\bigr],
 \]
-using a two-sided Welch $t$-test, which does not require equal variances across the two windows. Because this test is repeated over hundreds of candidate dates, the resulting $p$-values are corrected for multiple testing using the Benjamini-Hochberg FDR procedure; consecutive significant dates are then grouped into a single detected rupture. This procedure is applied separately to the raw ($N$) and purified ($V$) representations of every narrative in our collection.
+\st{using a two-sided Welch $t$-test, which does not require equal variances across the two windows. Because this test is repeated over hundreds of candidate dates, the resulting $p$-values are corrected for multiple testing using the Benjamini-Hochberg FDR procedure; consecutive significant dates are then grouped into a single detected rupture.} This procedure is applied separately to the raw ($N$) and purified ($V$) representations of every narrative in our collection.
 
-Results are reported in Figures~\ref{fig:my_label} Three observations stand out.
-
-First, the number of detected ruptures is systematically higher under $N$ than under $V$: averaged across narratives, $27.1$ ruptures are detected under $N$, against $16.5$ under $V$, and this ordering holds narrative by narrative without exception.
-
-Second, pairwise overlap between the sets of rupture dates detected across different narratives is markedly higher under $N$ than under $V$, as measured by the Jaccard index\footnote{Jaccard index: $J(A,B) = \dfrac{|A \cap B|}{|A \cup B|}$.}: the average pairwise Jaccard index is $0.74$ under $N$, compared to only $0.25$ under $V$. Taken together, these two findings confirm that raw representations tend to co-detect the same, corpus-wide ruptures, consistent with the leakage phenomenon described in Section~\ref{sec:model:generative_model}, whereas purified representations isolate ruptures that are substantially more specific to each individual narrative.
-
-Third, this is directly illustrated by the July 2017 bump discussed in our qualitative analysis: under $N$, it is detected as a significant rupture for every narrative in the collection, while under $V$ it is detected almost exclusively for the \emph{Welfare State Under Pressure} narrative, the only one for which it plausibly reflects genuine, narrative-specific content (as the period corresponds to Trump's first semester as President with notably repeated attempt to repeal the Obamacare) rather than a shift shared indiscriminately across the corpus.
-
-
+Results are reported in Figures~\ref{fig:rupture_comparison}. 
+Three observations, all compatible with our model, comforting our methodology, stand out:
+\begin{itemize}
+    \item First, the number of detected ruptures is systematically higher under $N$ than under $V$: averaged across narratives, $27.1$ ruptures are detected under $N$, against $16.5$ under $V$, and this ordering holds narrative by narrative without exception.
+    
+    \item Second, pairwise overlap between the sets of rupture dates detected across different narratives is markedly higher under $N$ than under $V$, as measured by the Jaccard index\footnote{Jaccard index: $J(A,B) = \dfrac{|A \cap B|}{|A \cup B|}$.}: the average pairwise Jaccard index is $0.74$ under $N$, compared to only $0.25$ under $V$. Taken together, these two findings confirm that raw representations tend to co-detect the same, corpus-wide ruptures, consistent with the leakage phenomenon described in Section~\ref{sec:model:generative_model}, whereas purified representations isolate ruptures that are substantially more specific to each individual narrative.
+    
+    \item Third, this is directly illustrated by the July 2017 bump discussed in our qualitative analysis: under $N$, it is detected as a significant rupture for every narrative in the collection, while under $V$ it is detected almost exclusively for the \narr{Welfare State Under Pressure} narrative, the only one for which it plausibly reflects genuine, narrative-specific content (as the period corresponds to Trump's first semester as President with notably repeated attempt to repeal the Obamacare) rather than a shift shared indiscriminately across the corpus.
+\end{itemize}
 
 \begin{figure}[h!]
     \centering
@@ -1260,45 +1385,57 @@ Third, this is directly illustrated by the July 2017 bump discussed in our quali
 
 We have introduced a rigorous algebraic methodology for monitoring the relative
 prevalence of competing narratives in a time-evolving text corpus.
-The key insight is that standard cosine similarity between article embeddings
-and raw narrative vectors suffers from a structural correlation bias induced
+
+{\color{ForestGreen}
+It allows to estimate the relative prevalence of narratives directly in the space of embedding, that is far cheaper and more reliable than prompting frontier models.
+}
+
+The key insight is that standard cosine similarity \textcolor{ForestGreen}{between embedding of raw narrative (i.e. arbitrary representative of a narrative using a sentence in natural language)} suffers from a structural correlation bias induced
 by shared semantic content, which we characterize formally through a linear
 generative model.
-
-Our remedy---a global orthogonalization on the Stiefel manifold---eliminates
-this shared component while preserving each narrative's idiosyncratic direction,
+\textcolor{ForestGreen}{It allows us to propose a method to orthogonalize arbitrary collection of narratives to turn them into what we call \emph{a collection of pure narratives}.}
+Our remedy is a global orthogonalization on the Stiefel manifold. 
+It eliminates
+the shared component while preserving each narrative's idiosyncratic direction,
 yielding an unbiased, non-parametric, and interpretable prevalence estimator.
 Validation on a large labeled news corpus confirms that the estimator
 faithfully recovers known historical dynamics, whereas the naive approach fails.
 
+\textcolor{ForestGreen}{
+Using a labelled dataset (the \emph{News Category Dataset}), we show qualitatively and quantitatively that our method is sound and allow to draw conclusions that otherwise would have been hidden into artefacts of natural language syntax. 
+}
+
 \paragraph{Perspectives.}
 The natural extension of this work is the application of the estimator to
-large-scale financial news corpora, opening the way to a direct quantitative
+large-scale \st{financial news} \textcolor{ForestGreen}{economic} corpora, opening the way to a direct quantitative
 model of narrative competition and its influence on the formation of
-economic expectations---a question at the intersection of computational linguistics
-and market microstructure.
+economic expectations, that is a question at the intersection of computational linguistics
+and price formation.
 
-\paragraph{Acknowledgments}
-We are grateful for the technical assistance of \TODO{add acknowledgments}.
+\paragraph{Acknowledgments.}
+%We are grateful for the technical assistance of \TODO{add acknowledgments}.
+\textcolor{ForestGreen}{
+Authors thank Emile Servan-Schreiber for numerous discussions on the intersection of narratives and prediction markets, especially in the context of the use of language models to synthesize artificial competition between narratives.
+}
 
-\paragraph{Funding Statement}
-\TODO{Insert funding statement or `None'.}
-
-\paragraph{Competing Interests}
+\paragraph{Competing Interests.}
 None.
 
-\paragraph{Data Availability Statement}
+\paragraph{Data Availability Statement.}
 The News Category Dataset is publicly available~\autocite{misra2022news}. Replication code can be found at \TODO{insert repository URL}.
 
-\paragraph{Ethical Standards}
+\paragraph{Ethical Standards.}
 The research meets all ethical guidelines, including adherence to the legal requirements of the study country.
 
-\paragraph{Author Contributions}
-Conceptualization: J.A., M.M., C.-A.L. Methodology: J.A., M.M., C.-A.L. Data curation: J.A., M.M. Data visualisation: J.A., M.M. Writing original draft: J.A., M.M., C.-A.L. All authors approved the final submitted draft.
+\paragraph{Author Contributions.}
+\textcolor{ForestGreen}{
+The initial work on orthogonalization in the space of embedding of narrative started as a student project of 3rd year of Ecole Polytechnique by Juliette Anglade and Mario Massy under the direction of Pr. Charles-Albert Lehalle. It later evolved in a joined research effort, reported into this paper. The contributions of the three authors is thus equal.
+}
+%Conceptualization: J.A., M.M., C.-A.L. Methodology: J.A., M.M., C.-A.L. Data curation: J.A., M.M. Data visualisation: J.A., M.M. Writing original draft: J.A., M.M., C.-A.L. All authors approved the final submitted draft.
 
-\printendnotes
+%\printendnotes
 
-\TODO{Est-ce que c'est léger en termes de références ?}
+\TODO{Est-ce que c'est léger en termes de références ?} \textcolor{red}{[CAL: je propose de poser cette question à Perplexity une fois qu'on aura la version finale... mais perso je trouve que c'est bien]}
 
 \printbibliography
 
