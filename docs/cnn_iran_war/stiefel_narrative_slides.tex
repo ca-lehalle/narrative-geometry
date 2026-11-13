@@ -1,6 +1,6 @@
 \documentclass[8pt,leqno,xcolor={dvipsnames,table},aspectratio=169]{beamer}
 
-\usepackage{fontawesome}
+\IfFileExists{fontawesome.sty}{\usepackage{fontawesome}}{}
 \usepackage{appendixnumberbeamer}
 \newenvironment{fullframe}
 {
@@ -457,7 +457,7 @@ progressbar=head,titleformat=regular,numbering=fraction,subsectionpage=progressb
 
 % THANK YOU
 {\usebackgroundtemplate{%
-    \includegraphics[width=\paperwidth,height=\paperheight]{polytechnique_vg_small.jpg}} 
+    \IfFileExists{polytechnique_vg_small.jpg}{\includegraphics[width=\paperwidth,height=\paperheight]{polytechnique_vg_small.jpg}}{}} 
   \begin{frame}[label=conclusion, standout]{Thank you for your attention}
     \setcounter{tocdepth}{2}
     \begin{center}

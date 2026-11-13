@@ -71,7 +71,7 @@ This repository supports two complementary studies that share the core Stiefel o
 ├──────────────────────────────────────────┼──────────────────────────────────────────┤
 │ Notebook:                                │ Notebook & Docs:                         │
 │ notebooks/                               │ notebooks/CNN_Iran_War_scrapping.py      │
-│  algebra_of_narratives_paper_example.py  │ docs/CNN_Iran/                           │
+│  algebra_of_narratives_paper_example.py  │ docs/cnn_iran_war/                       │
 └──────────────────────────────────────────┴──────────────────────────────────────────┘
 ```
 
@@ -98,11 +98,12 @@ narrative-geometry/
 │   ├── algebra_of_narratives_paper_example.py             # Study A: HuffPost experiments (Jupytext percent format)
 │   └── CNN_Iran_War_scrapping.py                          # Study B: CNN Iran War scraping, clustering & Stiefel pipeline
 └── docs/
-    ├── CNN_Iran/
-    │   ├── stiefel_narrative_methodology_v3.tex           # Detailed 5-stage methodology report for Study B
+    ├── cnn_iran_war/
+    │   ├── stiefel_narrative_methodology.tex              # Detailed 5-stage methodology report source for Study B
+    │   ├── stiefel_narrative_methodology.pdf              # Compiled methodology report PDF
     │   ├── stiefel_narrative_slides.tex                   # Beamer presentation source
     │   ├── stiefel_narrative_slides.pdf                   # Compiled presentation slides
-    │   └── images/                                        # Generated figures (t-SNE, heatmaps, cluster histograms)
+    │   └── images/                                        # Generated figures (t-SNE, heatmaps, dynamics, boxplots)
     └── notebooks/
         ├── algebra_of_narratives_paper_example.html       # Pre-rendered HTML execution of Study A
         └── CNN_Iran_War_scrapping.html                    # Pre-rendered HTML execution of Study B

@@ -111,13 +111,22 @@ def save_and_download_figure(
     dpi: int = 150,
     bbox_inches: str = "tight",
     fig=None,
+    output_dir: str | Path | None = None,
 ) -> list[Path]:
     """
     Save the current Matplotlib figure (or `fig`) under `basename + ext` for each
-    extension in `exts`. If running in Google Colab, also triggers browser download.
+    extension in `exts` (defaulting to `docs/cnn_iran_war/images/` when present).
+    If running in Google Colab, also triggers browser download.
     """
     saved_paths: list[Path] = []
     target_fig = fig if fig is not None else plt
+
+    if output_dir is None:
+        default_img_dir = get_repo_root() / "docs" / "cnn_iran_war" / "images"
+        target_dir = default_img_dir if default_img_dir.is_dir() else Path(".")
+    else:
+        target_dir = Path(output_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         from google.colab import files as colab_files  # type: ignore
@@ -125,12 +134,12 @@ def save_and_download_figure(
         colab_files = None
 
     for ext in exts:
-        fname = f"{basename}{ext}"
-        target_fig.savefig(fname, dpi=dpi, bbox_inches=bbox_inches)
-        saved_paths.append(Path(fname))
+        out_path = target_dir / f"{basename}{ext}"
+        target_fig.savefig(out_path, dpi=dpi, bbox_inches=bbox_inches)
+        saved_paths.append(out_path)
         if colab_files is not None:
             try:
-                colab_files.download(fname)
+                colab_files.download(str(out_path))
             except Exception:
                 pass
 

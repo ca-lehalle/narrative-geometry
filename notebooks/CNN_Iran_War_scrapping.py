@@ -909,6 +909,7 @@ for ind, (col_group, df) in enumerate(avg_cosine.items()):
   else:
     ax[ind].get_legend().remove()
 plt.tight_layout()
+save_and_download_figure('narrative_dynamics_comparison')
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="mQVzDGNTReRV" outputId="c8f69af9-7835-4c47-c07d-72290156efd0"
 replaces = ['Äô', 'Äì', 'Äî', 'Äò', 'Ä¢']
