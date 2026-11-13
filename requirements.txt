@@ -5,6 +5,7 @@ ipykernel
 ipywidgets
 numpy
 pandas
+pyarrow
 scipy
 statsmodels
 scikit-learn

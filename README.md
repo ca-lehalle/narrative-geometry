@@ -62,15 +62,15 @@ This repository supports two complementary studies that share the core Stiefel o
 ├──────────────────────────────────────────┼──────────────────────────────────────────┤
 │ Notebook:                                │ Notebook & Docs:                         │
 │ notebooks/                               │ notebooks/CNN_Iran_War_scrapping.py      │
-│  narratives_project_clean_version_...py  │ docs/CNN_Iran/                           │
+│  algebra_of_narratives_paper_example.py  │ docs/CNN_Iran/                           │
 └──────────────────────────────────────────┴──────────────────────────────────────────┘
 ```
 
 | Feature | Study A: HuffPost Reference Paper | Study B: CNN Iran War Case Study |
 | :--- | :--- | :--- |
 | **Authors** | Juliette Anglade, Charles-Albert Lehalle, Mario Massy | Charles-Albert Lehalle |
-| **Primary Script** | [`notebooks/narratives_project_clean_version_shared_3.py`](notebooks/narratives_project_clean_version_shared_3.py) | [`notebooks/CNN_Iran_War_scrapping.py`](notebooks/CNN_Iran_War_scrapping.py) |
-| **HTML Output** | [`docs/notebooks/narratives_project_clean_version_shared_3.html`](docs/notebooks/narratives_project_clean_version_shared_3.html) | [`docs/notebooks/CNN_Iran_War_scrapping.html`](docs/notebooks/CNN_Iran_War_scrapping.html) |
+| **Primary Script** | [`notebooks/algebra_of_narratives_paper_example.py`](notebooks/algebra_of_narratives_paper_example.py) | [`notebooks/CNN_Iran_War_scrapping.py`](notebooks/CNN_Iran_War_scrapping.py) |
+| **HTML Output** | [`docs/notebooks/algebra_of_narratives_paper_example.html`](docs/notebooks/algebra_of_narratives_paper_example.html) | [`docs/notebooks/CNN_Iran_War_scrapping.html`](docs/notebooks/CNN_Iran_War_scrapping.html) |
 | **Documentation** | Reference manuscript (*The Algebra of Narratives...*) | [`docs/CNN_Iran/stiefel_narrative_methodology_v3.tex`](docs/CNN_Iran/stiefel_narrative_methodology_v3.tex) & [`stiefel_narrative_slides.pdf`](docs/CNN_Iran/stiefel_narrative_slides.pdf) |
 | **Validation Mode** | Supervised counterfactual (human-labeled HuffPost categories) | Label-free *ex post* validation (in-cluster vs. out-of-cluster separation) |
 
@@ -81,19 +81,30 @@ This repository supports two complementary studies that share the core Stiefel o
 ```text
 narrative-geometry/
 ├── README.md
+├── pyproject.toml                                         # Package configuration for narrative_geometry
 ├── requirements.txt
+├── narrative_geometry/                                    # Shared Python library used by both notebooks
+│   ├── __init__.py
+│   ├── manifold.py                                        # Gram-Schmidt, Stiefel max-min, Procrustes, decomposition
+│   ├── embeddings.py                                      # ModernBERT loading, mean pooling, prototype averaging
+│   ├── metrics.py                                         # Resampling, specificity bootstrap, Welch t-test + BH-FDR
+│   ├── plotting.py                                        # Heatmaps, prevalence time series, rupture visualizations
+│   └── io_utils.py                                        # Google Drive / local resources fallback & file helpers
+├── resources/
+│   ├── cnn_news_pages.json                                # Consolidated dictionary of 171 CNN live-blog URLs
+│   └── cnn_news_<date>.json                               # Cached scraped CNN live-blog snippets & embeddings
 ├── notebooks/
-│   ├── narratives_project_clean_version_shared_3.py   # Study A: HuffPost experiments (Jupytext percent format)
-│   └── CNN_Iran_War_scrapping.py                      # Study B: CNN Iran War scraping, clustering & Stiefel pipeline
+│   ├── algebra_of_narratives_paper_example.py             # Study A: HuffPost experiments (Jupytext percent format)
+│   └── CNN_Iran_War_scrapping.py                          # Study B: CNN Iran War scraping, clustering & Stiefel pipeline
 └── docs/
     ├── CNN_Iran/
-    │   ├── stiefel_narrative_methodology_v3.tex       # Detailed 5-stage methodology report for Study B
-    │   ├── stiefel_narrative_slides.tex               # Beamer presentation source
-    │   ├── stiefel_narrative_slides.pdf               # Compiled presentation slides
-    │   └── images/                                    # Generated figures (t-SNE, heatmaps, cluster histograms)
+    │   ├── stiefel_narrative_methodology_v3.tex           # Detailed 5-stage methodology report for Study B
+    │   ├── stiefel_narrative_slides.tex                   # Beamer presentation source
+    │   ├── stiefel_narrative_slides.pdf                   # Compiled presentation slides
+    │   └── images/                                        # Generated figures (t-SNE, heatmaps, cluster histograms)
     └── notebooks/
-        ├── narratives_project_clean_version_shared_3.html  # Pre-rendered HTML execution of Study A
-        └── CNN_Iran_War_scrapping.html                     # Pre-rendered HTML execution of Study B
+        ├── algebra_of_narratives_paper_example.html       # Pre-rendered HTML execution of Study A
+        └── CNN_Iran_War_scrapping.html                    # Pre-rendered HTML execution of Study B
 ```
 
 ---
@@ -102,13 +113,14 @@ narrative-geometry/
 
 ### 4.1 Environment Setup
 
-Install the required dependencies in a virtual environment (Python 3.9+ recommended):
+Install the required dependencies and the local `narrative_geometry` library in a virtual environment (Python 3.9+ recommended):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 4.2 Working with Jupytext Notebooks
@@ -117,7 +129,7 @@ The scripts in `./notebooks/` are stored in the `py:percent` [Jupytext](https://
 
 - **Convert `.py` to `.ipynb` notebook**:
   ```bash
-  jupytext --to notebook notebooks/narratives_project_clean_version_shared_3.py
+  jupytext --to notebook notebooks/algebra_of_narratives_paper_example.py
   jupytext --to notebook notebooks/CNN_Iran_War_scrapping.py
   ```
 - **Synchronize changes between `.py` and `.ipynb`**:
@@ -129,7 +141,7 @@ The scripts in `./notebooks/` are stored in the `py:percent` [Jupytext](https://
   jupyter nbconvert --to html --execute --output=../docs/notebooks/<NOTEBOOK_NAME>.html notebooks/<NOTEBOOK_NAME>.ipynb
   ```
 
-### 4.3 Reproducing Study A (`narratives_project_clean_version_shared_3.py`)
+### 4.3 Reproducing Study A (`algebra_of_narratives_paper_example.py`)
 
 1. **Dataset**: Uses the publicly available [News Category Dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data) (Misra, 2022) via `kagglehub.dataset_download("rmisra/news-category-dataset")`.
 2. **Precomputation Step (Section 0)**:
@@ -141,7 +153,10 @@ The scripts in `./notebooks/` are stored in the `py:percent` [Jupytext](https://
 
 ### 4.4 Reproducing Study B (`CNN_Iran_War_scrapping.py`)
 
-1. **Stage 1 (Web Scraping)**: Fetches live-blog updates from CNN URLs covering March–August 2026 and stores per-day JSON files.
-2. **Stages 2–5 (Embedding, PCA + K-Means, Prototype Averaging, Stiefel Orthogonalization)**:
-   - Note that parts of the notebook were originally authored on Google Colab (`google.colab.drive` and `google.colab.files` calls are included for persisting scraped JSONs to Google Drive). When running locally, adjust the data folder path (`folder_path`) to a local directory containing the scraped JSON snippets.
-   - Uses `nomic-ai/modernbert-embed-base` via `sentence-transformers` and `pymanopt` on $\mathrm{St}(8, 768)$.
+1. **Configuration Flag & Storage Resolution**:
+   - At the top of `notebooks/CNN_Iran_War_scrapping.py`, set `SCRAPE_CNN_WEB_PAGES`:
+     - `SCRAPE_CNN_WEB_PAGES = False` (default): Loads the freshest cached `cnn_news_<date>.json` file without hitting CNN web servers.
+     - `SCRAPE_CNN_WEB_PAGES = True`: Scrapes the live CNN URLs listed in `resources/cnn_news_pages.json` and saves a dated snapshot `cnn_news_<date>.json`.
+   - Storage location is resolved automatically via `resolve_storage_dir()`: if running on Google Colab (or if `/content/drive/My Drive/data_for_colab` exists), it mounts/uses Google Drive; otherwise, it falls back seamlessly to the local `resources/` folder in this repository.
+2. **Stages 2–6 (Embedding, PCA + K-Means, Prototype Averaging, Stiefel Orthogonalization, Dynamics)**:
+   - Uses `nomic-ai/modernbert-embed-base` via `sentence-transformers` and `pymanopt` on $\mathrm{St}(8, 768)$ via `narrative_geometry.decompose_narratives()` and `narrative_geometry.average_cluster_prototypes()`.

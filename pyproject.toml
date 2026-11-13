@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "narrative-geometry"
+version = "0.1.0"
+description = "Algebraic orthogonalization on the Stiefel manifold for monitoring narrative dominance"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "scipy",
+    "statsmodels",
+    "scikit-learn",
+    "torch",
+    "transformers",
+    "sentence-transformers",
+    "pymanopt",
+    "autograd",
+    "matplotlib",
+    "seaborn",
+    "adjustText",
+    "kagglehub",
+    "requests",
+    "beautifulsoup4",
+    "tqdm",
+]
+
+[tool.setuptools.packages.find]
+include = ["narrative_geometry*"]

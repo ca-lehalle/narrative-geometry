@@ -19,416 +19,146 @@
 # 3. thanks to DeepSeek for the scrapping snippet (as usual: compact and efficient)
 
 # %% [markdown] id="1Y3Ix8zQjfKt"
-# ## Future update
+# ## Configuration & Future update
 #
-# To be future proof, note this new pattern
+# Set `SCRAPE_CNN_WEB_PAGES = True` below to scrape the CNN live-news web pages listed in `resources/cnn_news_pages.json`, or `False` to load the freshest `cnn_news_<date>.json` directly from storage (Google Drive if available, or `resources/` locally).
+#
+# To be future proof, note this new pattern:
 # - https://www.cnn.com/2026/08/25/world/live-news/iran-war-trump-sanctions
 #
 # The last date I ran this code (for a paper) was `2026-08-19`
 
-# %% [markdown] id="02nCn_Id6TIC"
-# # First list of URLs
-
 # %% id="-GgAk238zW3y"
-# For quick ad-hoc scraping in interactive sessions
+import json
+import os
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from tqdm.notebook import trange, tqdm
-import pandas as pd
-from IPython.display import display, HTML
+from IPython.display import HTML, display
+from tqdm.notebook import tqdm, trange
 
-# %% [markdown] id="8xD28Hd8CHY1"
-# # Third attemps
+# Ensure the repository root is on sys.path so narrative_geometry can be imported
+for _candidate in [Path.cwd().resolve(), Path.cwd().resolve().parent]:
+    if (_candidate / "narrative_geometry").is_dir() and str(_candidate) not in sys.path:
+        sys.path.insert(0, str(_candidate))
 
-# %% id="ZHjR5HW5BfCZ"
-cnn_iran_war_urls = {
-    # March 2026
-    "2026-03-01": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-01-26",
-    "2026-03-02": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-02-26",
-    "2026-03-03": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-03-26",
-    "2026-03-04": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-04-26",
-    "2026-03-05": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-05-26",
-    "2026-03-06": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-06-26",
-    "2026-03-07": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-07-26",
-    "2026-03-08": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-08-26",
-    "2026-03-09": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-09-26",
-    "2026-03-10": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-10-26",
-    "2026-03-11": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-11-26",
-    "2026-03-12": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-12-26",
-    "2026-03-13": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-13-26",
-    "2026-03-14": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-14-26",
-    "2026-03-15": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-15-26",
-    "2026-03-16": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-16-26",
-    "2026-03-17": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-17-26",
-    "2026-03-18": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-18-26",
-    "2026-03-19": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-19-26",
-    "2026-03-20": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-20-26",
-    "2026-03-21": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-21-26",
-    "2026-03-22": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-22-26",
-    "2026-03-23": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-23-26",
-    "2026-03-24": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-24-26",
-    "2026-03-25": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-25-26",
-    "2026-03-26": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-26-26",
-    "2026-03-27": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-27-26",
-    "2026-03-28": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-28-26",
-    "2026-03-29": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-29-26",
-    "2026-03-30": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-30-26",
-    "2026-03-31": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-31-26",
+from narrative_geometry import (
+    average_cluster_prototypes,
+    decompose_narratives,
+    find_freshest_dated_file,
+    get_resources_dir,
+    gram_schmidt,
+    normalize_rows,
+    resolve_storage_dir,
+    save_and_download_figure,
+    stiefel_optimize,
+)
 
-    # April 2026
-    "2026-04-01": "https://www.cnn.com/2026/04/01/world/live-news/iran-war-trump",
-    "2026-04-02": "https://www.cnn.com/2026/04/02/world/live-news/iran-war-trump",
-    "2026-04-03": "https://www.cnn.com/2026/04/03/world/live-news/iran-war-trump",
-    "2026-04-04": "https://www.cnn.com/2026/04/04/world/live-news/iran-war-trump",
-    "2026-04-05": "https://www.cnn.com/2026/04/05/world/live-news/iran-war-trump",
-    "2026-04-06": "https://www.cnn.com/2026/04/06/world/live-news/iran-war-trump",
-    "2026-04-07": "https://www.cnn.com/2026/04/07/world/live-news/iran-war-trump-us-israel",
-    "2026-04-08": "https://www.cnn.com/2026/04/08/world/live-news/iran-war-trump",
-    "2026-04-09": "https://www.cnn.com/2026/04/09/world/live-news/iran-war-trump",
-    "2026-04-10": "https://www.cnn.com/2026/04/10/world/live-news/iran-war-trump",
-    "2026-04-11": "https://www.cnn.com/2026/04/11/world/live-news/iran-war-trump",
-    "2026-04-12": "https://www.cnn.com/2026/04/12/world/live-news/iran-war-trump",
-    "2026-04-13": "https://www.cnn.com/2026/04/13/world/live-news/iran-war-trump",
-    "2026-04-14": "https://www.cnn.com/2026/04/14/world/live-news/iran-war-trump",
-    "2026-04-15": "https://www.cnn.com/2026/04/15/world/live-news/iran-war-trump",
-    "2026-04-16": "https://www.cnn.com/2026/04/16/world/live-news/iran-war-trump",
-    "2026-04-17": "https://www.cnn.com/2026/04/17/world/live-news/iran-war-trump",
-    "2026-04-18": "https://www.cnn.com/2026/04/18/world/live-news/iran-war-trump",
-    "2026-04-19": "https://www.cnn.com/2026/04/19/world/live-news/iran-war-trump",
-    "2026-04-20": "https://www.cnn.com/2026/04/20/world/live-news/iran-war-trump",
-    "2026-04-21": "https://www.cnn.com/2026/04/21/world/live-news/iran-war-trump",
-    "2026-04-22": "https://www.cnn.com/2026/04/22/world/live-news/iran-war-trump",
-    "2026-04-23": "https://www.cnn.com/2026/04/23/world/live-news/iran-war-trump",
-    "2026-04-24": "https://www.cnn.com/2026/04/24/world/live-news/iran-war-trump",
-    "2026-04-25": "https://www.cnn.com/2026/04/25/world/live-news/iran-war-trump",
-    "2026-04-26": "https://www.cnn.com/2026/04/26/world/live-news/iran-war-trump",
-    "2026-04-27": "https://www.cnn.com/2026/04/27/world/live-news/iran-war-trump",
-    "2026-04-28": "https://www.cnn.com/2026/04/28/world/live-news/iran-war-trump",
-    "2026-04-29": "https://www.cnn.com/2026/04/29/world/live-news/iran-war-trump",
-    "2026-04-30": "https://www.cnn.com/2026/04/30/world/live-news/iran-war-trump",
+# Top-of-notebook flag:
+# - True: retrieve news from CNN web pages and save cnn_news_<today>.json
+# - False: load the freshest cnn_news_<date>.json from Google Drive or resources/
+SCRAPE_CNN_WEB_PAGES = False
 
-    # May 2026
-    "2026-05-01": "https://www.cnn.com/2026/05/01/world/live-news/iran-war-trump",
-    "2026-05-02": "https://www.cnn.com/2026/05/02/world/live-news/iran-war-trump",
-    "2026-05-03": "https://www.cnn.com/2026/05/03/world/live-news/iran-war-trump",
-    "2026-05-04": "https://www.cnn.com/2026/05/04/world/live-news/iran-war-trump",
-    "2026-05-05": "https://www.cnn.com/2026/05/05/world/live-news/iran-war-trump",
-    "2026-05-06": "https://www.cnn.com/2026/05/06/world/live-news/iran-war-trump",
-    "2026-05-07": "https://www.cnn.com/2026/05/07/world/live-news/iran-war-trump",
-    "2026-05-08": "https://www.cnn.com/2026/05/08/world/live-news/iran-war-trump",
-    "2026-05-09": "https://www.cnn.com/2026/05/09/world/live-news/iran-war-trump",
-    "2026-05-10": "https://www.cnn.com/2026/05/10/world/live-news/iran-war-trump",
-    "2026-05-11": "https://www.cnn.com/2026/05/11/world/live-news/iran-war-trump",
-    "2026-05-12": "https://www.cnn.com/2026/05/12/world/live-news/iran-war-trump",
-    "2026-05-13": "https://www.cnn.com/2026/05/13/world/live-news/iran-war-trump",
-    "2026-05-14": "https://www.cnn.com/2026/05/14/world/live-news/iran-war-trump",
-    "2026-05-15": "https://www.cnn.com/2026/05/15/world/live-news/iran-war-trump",
-    "2026-05-16": "https://www.cnn.com/2026/05/16/world/live-news/iran-war-trump",
-    "2026-05-17": "https://www.cnn.com/2026/05/17/world/live-news/iran-war-trump",
-    "2026-05-18": "https://www.cnn.com/2026/05/18/world/live-news/iran-war-trump",
-    "2026-05-19": "https://www.cnn.com/2026/05/19/world/live-news/iran-war-trump",
-    "2026-05-20": "https://www.cnn.com/2026/05/20/world/live-news/iran-war-trump",
-    "2026-05-21": "https://www.cnn.com/2026/05/21/world/live-news/iran-war-trump",
-    "2026-05-22": "https://www.cnn.com/2026/05/22/world/live-news/iran-war-trump",
-    "2026-05-23": "https://www.cnn.com/2026/05/23/world/live-news/iran-war-trump",
-    "2026-05-24": "https://www.cnn.com/2026/05/24/world/live-news/iran-war-trump",
-    "2026-05-25": "https://www.cnn.com/2026/05/25/world/live-news/iran-war-trump",
-    "2026-05-26": "https://www.cnn.com/2026/05/26/world/live-news/iran-war-trump",
-    "2026-05-27": "https://www.cnn.com/2026/05/27/world/live-news/iran-war-trump",
-    "2026-05-28": "https://www.cnn.com/2026/05/28/world/live-news/iran-war-trump",
-    "2026-05-29": "https://www.cnn.com/2026/05/29/world/live-news/iran-war-trump",
-    "2026-05-30": "https://www.cnn.com/2026/ e.com/2026/05/30/world/live-news/iran-war-trump",
-    "2026-05-31": "https://www.cnn.com/2026/05/31/world/live-news/iran-war-trump",
-
-    # June 2026
-    "2026-06-01": "https://www.cnn.com/2026/06/01/world/live-news/iran-war-trump",
-    "2026-06-02": "https://www.cnn.com/2026/06/02/world/live-news/iran-war-trump",
-    "2026-06-03": "https://www.cnn.com/2026/06/03/world/live-news/iran-war-trump",
-    "2026-06-04": "https://www.cnn.com/2026/06/04/world/live-news/iran-war-trump",
-    "2026-06-05": "https://www.cnn.com/2026/06/05/world/live-news/iran-war-trump",
-    "2026-06-06": "https://www.cnn.com/2026/06/06/world/live-news/iran-war-trump",
-    "2026-06-07": "https://www.cnn.com/2026/06/07/world/live-news/iran-war-trump",
-    "2026-06-08": "https://www.cnn.com/2026/06/08/world/live-news/iran-war-trump",
-    "2026-06-09": "https://www.cnn.com/2026/06/09/world/live-news/iran-war-trump",
-    "2026-06-10": "https://www.cnn.com/2026/06/10/world/live-news/iran-war-trump",
-    "2026-06-11": "https://www.cnn.com/2026/06/11/world/live-news/iran-war-trump",
-    "2026-06-12": "https://www.cnn.com/2026/06/12/world/live-news/iran-war-trump",
-    "2026-06-13": "https://www.cnn.com/2026/06/13/world/live-news/iran-war-trump",
-    "2026-06-14": "https://www.cnn.com/2026/06/14/world/live-news/iran-war-trump-israel",
-    "2026-06-15": "https://www.cnn.com/2026/06/15/world/live-news/iran-war-trump",
-    "2026-06-16": "https://www.cnn.com/2026/06/16/world/live-news/iran-war-trump",
-    "2026-06-17": "https://www.cnn.com/2026/06/17/world/live-news/iran-war-trump",
-    "2026-06-18": "https://www.cnn.com/2026/06/18/world/live-news/iran-war-trump",
-    "2026-06-19": "https://www.cnn.com/2026/06/19/world/live-news/iran-war-trump",
-    "2026-06-20": "https://www.cnn.com/2026/06/20/world/live-news/iran-war-trump",
-    "2026-06-21": "https://www.cnn.com/2026/06/21/world/live-news/iran-war-trump",
-    "2026-06-22": "https://www.cnn.com/2026/06/22/world/live-news/iran-war-trump",
-    "2026-06-23": "https://www.cnn.com/2026/06/23/world/live-news/iran-war-trump",
-    "2026-06-24": "https://www.cnn.com/2026/06/24/world/live-news/iran-war-trump",
-    "2026-06-25": "https://www.cnn.com/2026/06/25/world/live-news/iran-war-trump",
-    "2026-06-26": "https://www.cnn.com/2026/06/26/world/live-news/iran-war-trump",
-    "2026-06-27": "https://www.cnn.com/2026/06/27/world/live-news/iran-war-trump",
-    "2026-06-28": "https://www.cnn.com/2026/06/28/world/live-news/iran-war-trump",
-    "2026-06-29": "https://www.cnn.com/2026/06/29/world/live-news/iran-war-trump",
-    "2026-06-30": "https://www.cnn.com/2026/06/30/world/live-news/iran-war-trump",
-
-    # July 2026
-    "2026-07-01": "https://www.cnn.com/2026/07/01/world/live-news/iran-war-trump",
-    "2026-07-02": "https://www.cnn.com/2026/07/02/world/live-news/iran-war-trump",
-    "2026-07-03": "https://www.cnn.com/2026/07/03/world/live-news/iran-war-trump",
-    "2026-07-04": "https://www.cnn.com/2026/07/04/world/live-news/iran-war-trump",
-    "2026-07-05": "https://www.cnn.com/2026/07/05/world/live-news/iran-war-trump",
-    "2026-07-06": "https://www.cnn.com/2026/07/06/world/live-news/iran-war-trump",
-    "2026-07-07": "https://www.cnn.com/2026/07/07/world/live-news/iran-war-trump",
-    "2026-07-08": "https://www.cnn.com/2026/07/08/world/live-news/iran-war-trump",
-    "2026-07-09": "https://www.cnn.com/2026/07/09/world/live-news/iran-war-trump",
-    "2026-07-10": "https://www.cnn.com/2026/07/10/world/live-news/iran-war-trump",
-    "2026-07-11": "https://www.cnn.com/2026/07/11/world/live-news/iran-war-trump",
-    "2026-07-12": "https://www.cnn.com/2026/07/12/world/live-news/iran-war-trump",
-    "2026-07-13": "https://www.cnn.com/2026/07/13/world/live-news/iran-war-trump",
-    "2026-07-14": "https://www.cnn.com/2026/07/14/world/live-news/iran-war-trump",
-    "2026-07-15": "https://www.cnn.com/2026/07/15/world/live-news/iran-war-trump",
-    "2026-07-16": "https://www.cnn.com/2026/07/16/world/live-news/iran-war-trump",
-    "2026-07-17": "https://www.cnn.com/2026/07/17/world/live-news/iran-war-trump",
-    "2026-07-18": "https://www.cnn.com/2026/07/18/world/live-news/iran-war-trump",
-    "2026-07-19": "https://www.cnn.com/2026/07/19/world/live-news/iran-war-trump",
-    "2026-07-20": "https://www.cnn.com/2026/07/20/world/live-news/iran-war-trump",
-    "2026-07-21": "https://www.cnn.com/2026/07/21/world/live-news/iran-war-trump",
-    "2026-07-22": "https://www.cnn.com/2026/07/22/world/live-news/iran-war-trump",
-    "2026-07-23": "https://www.cnn.com/2026/07/23/world/live-news/iran-war-trump",
-    "2026-07-24": "https://www.cnn.com/2026/07/24/world/live-news/iran-war-trump",
-    "2026-07-25": "https://www.cnn.com/2026/07/25/world/live-news/iran-war-trump",
-    "2026-07-26": "https://www.cnn.com/2026/07/26/world/live-news/iran-war-trump",
-    "2026-07-27": "https://www.cnn.com/2026/07/27/world/live-news/iran-war-trump",
-    "2026-07-28": "https://www.cnn.com/2026/07/28/world/live-news/iran-war-trump",
-    "2026-07-29": "https://www.cnn.com/2026/07/29/world/live-news/iran-war-trump",
-    "2026-07-30": "https://www.cnn.com/2026/07/30/world/live-news/iran-war-trump",
-    "2026-07-31": "https://www.cnn.com/2026/07/31/world/live-news/iran-war-trump",
-
-    # August 2026
-    "2026-08-01": "https://www.cnn.com/2026/08/01/world/live-news/iran-war-trump",
-    "2026-08-02": "https://www.cnn.com/2026/08/02/world/live-news/iran-war-trump",
-    "2026-08-03": "https://www.cnn.com/2026/08/03/world/live-news/iran-war-trump",
-    "2026-08-04": "https://www.cnn.com/2026/08/04/world/live-news/iran-war-trump",
-    "2026-08-05": "https://www.cnn.com/2026/08/05/world/live-news/iran-war-trump",
-    "2026-08-06": "https://www.cnn.com/2026/08/06/world/live-news/iran-war-trump",
-    "2026-08-07": "https://www.cnn.com/2026/08/07/world/live-news/iran-war-trump",
-    "2026-08-08": "https://www.cnn.com/2026/08/08/world/live-news/iran-war-trump",
-    "2026-08-09": "https://www.cnn.com/2026/08/09/world/live-news/iran-war-trump",
-    "2026-08-10": "https://www.cnn.com/2026/08/10/world/live-news/iran-war-trump",
-    "2026-08-11": "https://www.cnn.com/2026/08/11/world/live-news/iran-war-trump",
-    "2026-08-12": "https://www.cnn.com/2026/08/12/world/live-news/iran-war-trump",
-    "2026-08-13": "https://www.cnn.com/2026/08/13/world/live-news/iran-war-trump", # https://edition.cnn.com/2026/08/13/world/live-news/iran-war-trump
-    "2026-08-14": "https://www.cnn.com/2026/08/14/world/live-news/iran-war-trump",
-    "2026-08-15": "https://www.cnn.com/2026/08/15/world/live-news/iran-war-trump",
-    "2026-08-16": "https://www.cnn.com/2026/08/16/world/live-news/iran-war-trump",
-    "2026-08-17": "https://www.cnn.com/2026/08/17/world/live-news/iran-war-trump",
-    "2026-08-18": "https://www.cnn.com/2026/08/18/world/live-news/iran-war-trump",
-}
-
-# %% [markdown] id="kunWonyhEWvZ"
-# # Month by month patching
-#
-# using Claude.
-
-# %% id="zqqOiO43EPBX"
-march_urls = {
-    "2026-03-01": "https://www.cnn.com/world/live-news/us-israel-iran-attack-03-01-26-intl",
-    "2026-03-02": "https://edition.cnn.com/world/live-news/iran-israel-us-attack-03-02-26-intl-hnk",
-    "2026-03-03": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-03-26",
-    "2026-03-05": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-05-26",
-    "2026-03-17": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-17-26",
-    "2026-03-22": "https://www.cnn.com/world/live-news/iran-war-us-israel-trump-03-22-26",
-    "2026-03-25": "https://www.cnn.com/2026/03/25/world/live-news/iran-war-us-israel-trump-03-25-26",
-    "2026-03-29": "https://www.cnn.com/2026/03/29/world/live-news/iran-war-us-israel-trump",
-}
-
-# %% id="HalEh0YsEQJK"
-april_urls = {
-    "2026-04-01": "https://www.cnn.com/2026/04/01/world/live-news/iran-war-us-trump-oil",
-    "2026-04-03": "https://www.cnn.com/2026/04/03/world/live-news/iran-war-us-trump-oil",
-    "2026-04-20": "https://www.cnn.com/2026/04/20/world/live-news/iran-war-us-trump-israel",
-    "2026-04-21": "https://www.cnn.com/2026/04/20/world/live-news/iran-war-us-trump-israel",  # article dated Apr 21, URL path is 04/20
-    "2026-04-24": "https://www.cnn.com/2026/04/24/world/live-news/iran-war-trump-israel-lebanon",
-}
-
-# %% id="i52K9I-sESUD"
-may_urls = {
-    "2026-05-06": "https://www.cnn.com/2026/05/06/world/live-news/iran-war-trump-strait-of-hormuz",
-    "2026-05-07": "https://www.cnn.com/2026/05/07/world/live-news/trump-iran-war-news",
-    "2026-05-12": "https://www.cnn.com/2026/05/12/world/live-news/trump-iran-war-news",
-    "2026-05-24": "https://edition.cnn.com/2026/05/24/world/live-news/iran-war-news",
-    "2026-05-27": "https://edition.cnn.com/2026/05/27/world/live-news/iran-war-us-news",
-}
-may_urls = {
-    "2026-05-06": "https://www.cnn.com/2026/05/06/world/live-news/iran-war-trump-strait-of-hormuz",
-    "2026-05-07": "https://www.cnn.com/2026/05/07/world/live-news/trump-iran-war-news",
-    "2026-05-10": "https://www.cnn.com/2026/05/10/world/live-news/iran-war-news",
-    "2026-05-11": "https://www.cnn.com/2026/05/10/world/live-news/iran-war-news",  # published May 11, path dated 05/10
-    "2026-05-24": "https://www.cnn.com/2026/05/24/world/live-news/iran-war-news",
-    "2026-05-25": "https://www.cnn.com/2026/05/25/world/live-news/iran-war-us-peace-deal",
-    "2026-05-27": "https://edition.cnn.com/2026/05/27/world/live-news/iran-war-us-news",
-    "2026-05-28": "https://www.cnn.com/2026/05/28/world/live-news/iran-war-us-news",
-    "2026-05-29": "https://edition.cnn.com/2026/05/29/world/live-news/iran-trump-war-news",
-}
-
-# %% id="s7ifxTyFEzPl"
-june_urls = {
-    "2026-06-04": "https://www.cnn.com/2026/06/04/world/live-news/iran-trump-war-news",
-    "2026-06-07": "https://edition.cnn.com/2026/06/07/world/live-news/iran-war-trump-israel-lebanon",
-    "2026-06-08": "https://www.cnn.com/2026/06/07/world/live-news/iran-war-trump-israel-lebanon",  # coverage spans 7-8
-    "2026-06-09": "https://www.cnn.com/2026/06/09/world/live-news/iran-war-trump-israel",
-    "2026-06-10": "https://www.cnn.com/2026/06/09/world/live-news/iran-war-trump-israel",  # coverage spans 9-10
-    "2026-06-12": "https://www.cnn.com/2026/06/12/world/live-news/iran-war-trump-israel",
-    "2026-06-21": "https://www.cnn.com/2026/06/21/world/live-news/iran-war-trump-israel-lebanon",
-    "2026-06-27": "https://www.cnn.com/2026/06/27/world/live-news/iran-war-strikes-trump",
-    "2026-06-28": "https://www.cnn.com/2026/06/28/world/live-news/iran-war-strikes-trump",
-    "2026-06-29": "https://edition.cnn.com/2026/06/29/world/live-news/iran-war-strikes-trump",
-}
-
-# %% id="XYmQES-DF8vO"
-july_urls = {
-    "2026-07-03": "https://www.cnn.com/2026/07/03/world/live-news/iran-funeral-war-trump",
-    "2026-07-04": "https://www.cnn.com/2026/07/04/world/live-news/iran-khamenei-funeral-war-trump",
-    "2026-07-05": "https://www.cnn.com/2026/07/05/world/live-news/iran-khamenei-funeral-war-trump",
-    "2026-07-06": "https://edition.cnn.com/2026/07/06/world/live-news/iran-khamenei-funeral-war-trump",
-    "2026-07-07": "https://edition.cnn.com/2026/07/06/world/live-news/iran-khamenei-funeral-war-trump",  # coverage spans 6-7, path dated 07/06
-    "2026-07-17": "https://www.cnn.com/2026/07/17/world/live-news/iran-war-trump",
-    "2026-07-18": "https://www.cnn.com/2026/07/18/world/live-news/iran-war-trump",
-    "2026-07-19": "https://www.cnn.com/2026/07/19/world/live-news/iran-war-trump",
-    "2026-07-23": "https://www.cnn.com/2026/07/23/world/live-news/iran-war-trump",
-    "2026-07-24": "https://www.cnn.com/2026/07/24/world/live-news/iran-war-trump",
-    "2026-07-26": "https://www.cnn.com/2026/07/26/world/live-news/iran-war-trump",
-    "2026-07-27": "https://www.cnn.com/2026/07/27/world/live-news/iran-war-trump",
-    "2026-07-29": "https://www.cnn.com/2026/07/29/world/live-news/iran-trump-news",
-    "2026-07-30": "https://www.cnn.com/2026/07/30/world/live-news/iran-war-trump",
-}
-
-# %% id="emcpj-sRORDU"
+# %% [markdown] id="02nCn_Id6TIC"
+# # Load consolidated URL list from `resources/cnn_news_pages.json`
 
 # %% id="kt39ynRkHT_F"
-updated_url = cnn_iran_war_urls.copy()
-updated_url.update(march_urls)
-updated_url.update(april_urls)
-updated_url.update(may_urls)
-updated_url.update(june_urls)
-updated_url.update(july_urls)
+resources_dir = get_resources_dir()
+cnn_pages_path = resources_dir / "cnn_news_pages.json"
+
+with open(cnn_pages_path, "r") as f:
+    updated_url = json.load(f)
+
+cnn_iran_war_urls = updated_url
+print(f"Loaded {len(updated_url)} CNN URLs from {cnn_pages_path}")
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 1000, "referenced_widgets": ["7dbf27a8589c4030b502591ea3abfc10", "d3e07e2192f5491db071958666555c2d", "bab09fbbf5414e07bcd21beab16b2aac", "a9354553cf9b4fc6a7afabcc56aa4cad", "836797c7e146469d82e161733b498f68", "57663f1d5b054051bfc2c6d97a95fd7b", "ecd2a5bd204a457b90c421645a468a6f", "c3f1c04d9b354a218c7092ee83f5b6ff", "754feb2a9d6441f5b750b811e4525642", "d86f2a3473914a78bd764196effd8f85", "8041207d1df248a5bca809f2570789cd"]} id="K99HjbwdHX3p" outputId="c688d7f9-6b06-43db-ddb2-0d1e6deb3e67"
-from tqdm.notebook import trange, tqdm
-
 cnn_news = {}
 bad_news = {}
 
-pbar = tqdm(updated_url.items(), desc='description')
-for day, url in pbar:
-  pbar.set_description(day)
+if SCRAPE_CNN_WEB_PAGES:
+    pbar = tqdm(updated_url.items(), desc="description")
+    for day, url in pbar:
+        pbar.set_description(day)
 
-  # get the file
-  try:
-    r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
-    s = BeautifulSoup(r.content, 'html.parser')
-  except Exception as e:
-    print(f"Error scraping [{day}] - {url}: {e}")
-    bad_news[day] = (url, None, None)
-    continue
+        # get the file
+        try:
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            s = BeautifulSoup(r.content, "html.parser")
+        except Exception as e:
+            print(f"Error scraping [{day}] - {url}: {e}")
+            bad_news[day] = (url, None, None)
+            continue
 
-  # parse the file
-  try:
-    title = s.find('h1', {'data-editable': 'headlineText'}).get_text(strip=True)
-    contents = [c.get_text(strip=True) for c in s.find_all('div', class_='live-story-post__content')]
-    cnn_news[day] = (url, title, contents)
-  except Exception as e:
-    print(f"Error parsing [{day}] - {url}: {e}")
-    bad_news[day] = (url, None, None)
+        # parse the file
+        try:
+            title = s.find("h1", {"data-editable": "headlineText"}).get_text(strip=True)
+            contents = [
+                c.get_text(strip=True)
+                for c in s.find_all("div", class_="live-story-post__content")
+            ]
+            cnn_news[day] = (url, title, contents)
+        except Exception as e:
+            print(f"Error parsing [{day}] - {url}: {e}")
+            bad_news[day] = (url, None, None)
+else:
+    print("SCRAPE_CNN_WEB_PAGES is False — skipping live web scraping and using cached cnn_news_<date>.json.")
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="roLMyHEPHeJ-" outputId="f3ea88a4-8411-49d0-db90-aafa0a0f1b20"
-print(f"{len(cnn_news)} found over {len(cnn_iran_war_urls)}")
+if SCRAPE_CNN_WEB_PAGES:
+    print(f"{len(cnn_news)} found over {len(updated_url)}")
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 241} id="KXY6WorLHeHn" outputId="1e92f4f4-cc7f-4c9b-9bb4-2422464183ee"
-import pandas as pd
-# .split('Ä¢')
-CNN_04_df = pd.DataFrame([{'date': date, 'title': title, 'contents': contents, 'url': url}
-                              for date, (url, title, contents) in cnn_news.items()])
-CNN_04_df[:4]
+if SCRAPE_CNN_WEB_PAGES and len(cnn_news) > 0:
+    CNN_04_df = pd.DataFrame(
+        [
+            {"date": date, "title": title, "contents": contents, "url": url}
+            for date, (url, title, contents) in cnn_news.items()
+        ]
+    )
+    display(CNN_04_df[:4])
 
 # %% id="X5FukZ8-HeE0"
 # [url for date, (url, _, _) in bad_news.items()]
 
-# %% id="NUEAgCWTHd_S"
-
 # %% [markdown] id="XjFEb0rSdR0V"
-# # SAVE STEP 1. Save/Load the most complete version in my google drive
-
-# %% id="-K9DQ-K-SQaZ"
-# For quick ad-hoc scraping in interactive sessions
-import requests
-from bs4 import BeautifulSoup
-from tqdm.notebook import trange, tqdm
-import pandas as pd
-from IPython.display import display, HTML
+# # SAVE STEP 1. Save/Load the most complete version (Google Drive or local `resources/`)
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="Srxlr5wOeR28" outputId="e161d239-0513-468c-8fdd-b5575596c641"
-# Mount Google Drive
-from google.colab import drive
-drive.mount('/content/drive')
+# Resolve storage directory: mounts Google Drive if available, otherwise uses local resources/
+drive_path = str(resolve_storage_dir(local_dir=get_resources_dir()))
 
-import json
-import os
-
-# Define the path to your data_for_colab directory in Google Drive
-drive_path = '/content/drive/My Drive/data_for_colab'
-
-# Define the full path for the JSON file
-from datetime import datetime
-today_str = datetime.today().strftime('%Y-%m-%d')
-
+today_str = datetime.today().strftime("%Y-%m-%d")
 file_path = os.path.join(drive_path, f"cnn_news_{today_str}.json")
 
 # %% id="xwW_etJOHd8c"
-# Save the cnn_news dictionary to a JSON file
-import os.path
-
-if os.path.isfile(file_path):
-  print(f"not overwriting {file_path}")
-elif 'cnn_news' in locals() and len(cnn_news)>0:
-  with open(file_path, 'w') as f:
-      json.dump(cnn_news, f, indent=4)
-  print(f"cnn_news dictionary saved to {file_path}")
+# Save the cnn_news dictionary to a JSON file if scraped
+if SCRAPE_CNN_WEB_PAGES and "cnn_news" in locals() and len(cnn_news) > 0:
+    if os.path.isfile(file_path):
+        print(f"not overwriting {file_path}")
+    else:
+        with open(file_path, "w") as f:
+            json.dump(cnn_news, f, indent=4)
+        print(f"cnn_news dictionary saved to {file_path}")
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="K4ugIiFlnVEq" outputId="347b6744-a9c3-4f7f-e3ae-0d5f9dec1d42"
-import os
-import re
-from datetime import datetime
+freshest_json = find_freshest_dated_file(
+    drive_path,
+    prefix="cnn_news_",
+    suffix=".json",
+    fallback_dirs=[get_resources_dir()],
+)
 
-# Assuming drive_path is already defined from a previous cell
-# If not, it would need to be defined here, e.g.:
-# drive_path = '/content/drive/My Drive/data_for_colab'
-
-# List all files in the directory
-all_files = os.listdir(drive_path)
-
-# Define the pattern to match cnn_news_YYYY-MM-DD.json
-file_pattern = re.compile(r"cnn_news_(\d{4}-\d{2}-\d{2})\.json")
-
-most_recent_file = None
-most_recent_date = None
-
-for filename in all_files:
-    match = file_pattern.match(filename)
-    if match:
-        date_str = match.group(1)
-        current_date = datetime.strptime(date_str, '%Y-%m-%d')
-        print(f"file with date <{date_str}> found --> {current_date}")
-
-        if most_recent_date is None or current_date > most_recent_date:
-            most_recent_date = current_date
-            most_recent_file = filename
-            print(f"new most recent file updated: {most_recent_file}")
-
-if most_recent_file:
+if freshest_json is not None:
+    most_recent_file = freshest_json.name
+    full_path_most_recent = str(freshest_json)
     print(f"The most recent file is: {most_recent_file}")
-    full_path_most_recent = os.path.join(drive_path, most_recent_file)
     print(f"Full path: {full_path_most_recent}")
 else:
     print("No files matching the pattern 'cnn_news_YYYY-MM-DD.json' were found.")
@@ -438,10 +168,12 @@ else:
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="maBR5nKWeWBu" outputId="53b16f6e-2408-42dc-a864-5c5fadf79223"
 # Load the cnn_news dictionary from the JSON file
-with open(full_path_most_recent, 'r') as f:
+with open(full_path_most_recent, "r") as f:
     loaded_cnn_news = json.load(f)
 
-print(f"Successfully loaded cnn_news from {full_path_most_recent}. It contains {len(loaded_cnn_news)} entries.")
+print(
+    f"Successfully loaded cnn_news from {full_path_most_recent}. It contains {len(loaded_cnn_news)} entries."
+)
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 146} id="cRuYUmYseqnx" outputId="2ccc0a1b-f996-48b9-b22e-4b19341ab4da"
 pd.Series(1, index=pd.to_datetime(list(loaded_cnn_news.keys()))).cumsum().plot(
@@ -543,16 +275,21 @@ import matplotlib.pyplot as plt
 # --- 1. Embed -------------------------------------------------------------
 # Using a ModernBERT variant *fine-tuned for embeddings* rather than raw
 # answerdotai/ModernBERT-base (MLM-pretrained, not contrastively tuned).
-model = SentenceTransformer("nomic-ai/modernbert-embed-base")
-
-texts = all_items_ser.tolist()
-embeddings = model.encode(
-    texts,
-    batch_size=32,
-    show_progress_bar=True,
-    normalize_embeddings=True,   # L2-normalize -> cosine geometry
-)
-embeddings = np.asarray(embeddings)
+cached_emb_path = full_path_most_recent.replace(".json", "-embeddings.parquet")
+if not SCRAPE_CNN_WEB_PAGES and os.path.isfile(cached_emb_path):
+    print(f"Loading cached article embeddings from {cached_emb_path}")
+    _cached_emb_df = pd.read_parquet(cached_emb_path)
+    embeddings = np.vstack(_cached_emb_df["embedding"].values)
+else:
+    model = SentenceTransformer("nomic-ai/modernbert-embed-base")
+    texts = all_items_ser.tolist()
+    embeddings = model.encode(
+        texts,
+        batch_size=32,
+        show_progress_bar=True,
+        normalize_embeddings=True,   # L2-normalize -> cosine geometry
+    )
+    embeddings = np.asarray(embeddings)
 
 
 
@@ -767,141 +504,105 @@ for cluster_id in sorted(tsne_df["cluster"].unique()):
         print(f"[{date} #{content_order}] {row['content'][:150]}...")
 
 # %% [markdown] id="FEP0b551t6u7"
-# # SAVE STEP 3. Save/Load embeddings
-
-# %% id="V2rdMogQu2Ql"
-import numpy as np
-from tqdm.notebook import trange, tqdm
-import pandas as pd
-from IPython.display import display, HTML
+# # SAVE STEP 3. Save/Load embeddings (Google Drive or local `resources/`)
 
 # %% [markdown] id="nkNfR3iXuwFy"
 # ## Save t-SNE
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="GlZYeltbu1Md" outputId="5081297c-7987-4f96-f6f7-2ef950a63755"
-output_parquet_path = full_path_most_recent.replace('.json', '-tsne_clusters.parquet')
+output_parquet_path = full_path_most_recent.replace(".json", "-tsne_clusters.parquet")
 
 if os.path.isfile(output_parquet_path):
-  print(f"not overwriting {output_parquet_path}")
-elif 'tsne_df' in locals():
-  tsne_df.to_parquet(output_parquet_path)
-  print(f"tsne_df saved to {output_parquet_path}")
+    print(f"not overwriting {output_parquet_path}")
+elif "tsne_df" in locals():
+    tsne_df.to_parquet(output_parquet_path)
+    print(f"tsne_df saved to {output_parquet_path}")
 else:
-  print("nothing to save for the t-SNE")
+    print("nothing to save for the t-SNE")
 
 # %% [markdown] id="61ESh9LguzRc"
 # ## Save embeddings
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 252} id="j3YMwFIXtEaZ" outputId="fba70227-1d28-45fd-d187-dea374d152ee"
-if 'all_items_ser' in locals() and 'embeddings' in locals() :
-  embeddings_df = pd.DataFrame({
-      'content': all_items_ser.values,
-      'embedding': list(embeddings)
-  }, index=all_items_ser.index)
+if "all_items_ser" in locals() and "embeddings" in locals():
+    embeddings_df = pd.DataFrame(
+        {"content": all_items_ser.values, "embedding": list(embeddings)},
+        index=all_items_ser.index,
+    )
 
-  # Define the output path for the embeddings parquet file
-  output_embeddings_parquet_path = full_path_most_recent.replace('.json', '-embeddings.parquet')
+    output_embeddings_parquet_path = full_path_most_recent.replace(
+        ".json", "-embeddings.parquet"
+    )
 
-  # Check if the file already exists to prevent overwriting
-  if os.path.isfile(output_embeddings_parquet_path):
-      print(f"Not overwriting existing embeddings file: {output_embeddings_parquet_path}")
-  elif 'embeddings_df' in locals():
-      embeddings_df.to_parquet(output_embeddings_parquet_path)
-      print(f"Embeddings DataFrame saved to {output_embeddings_parquet_path}")
+    if os.path.isfile(output_embeddings_parquet_path):
+        print(
+            f"Not overwriting existing embeddings file: {output_embeddings_parquet_path}"
+        )
+    elif "embeddings_df" in locals():
+        embeddings_df.to_parquet(output_embeddings_parquet_path)
+        print(f"Embeddings DataFrame saved to {output_embeddings_parquet_path}")
 
-  display(embeddings_df.head())
+    display(embeddings_df.head())
 else:
-  print("nothing to save for the embeddings")
+    print("nothing to save for the embeddings")
 
 # %% [markdown] id="p4Z7-k3zvqju"
 # ## Load t-SNE and embeddings
 
-# %% id="JVsYC1I5HbJM"
-
-from tqdm.notebook import trange, tqdm
-import pandas as pd
-import numpy as np
-from IPython.display import display, HTML
-
 # %% colab={"base_uri": "https://localhost:8080/"} id="EMsPo5WkHDP3" outputId="bfd869bc-9906-4781-eec7-72bd8c709101"
-# Mount Google Drive
-from google.colab import drive
-drive.mount('/content/drive')
-
-import json
-import os
-
-# Define the path to your data_for_colab directory in Google Drive
-drive_path = '/content/drive/My Drive/data_for_colab'
+drive_path = str(resolve_storage_dir(local_dir=get_resources_dir()))
 
 # %% id="ZZ5z-T8jvueB" colab={"base_uri": "https://localhost:8080/"} outputId="a1c52f39-3df0-4c12-cbe7-e0cb35b3a44e"
-import os
-import re
-from datetime import datetime
+freshest_tsne_parquet = find_freshest_dated_file(
+    drive_path,
+    prefix="cnn_news_",
+    suffix="-tsne_clusters.parquet",
+    fallback_dirs=[get_resources_dir()],
+)
 
-# Assuming drive_path is already defined (e.g., from the 'Srxlr5wOeR28' cell)
-# drive_path = '/content/drive/My Drive/data_for_colab'
-
-# List all files in the directory
-all_files_in_drive = os.listdir(drive_path)
-
-# Define the pattern to match cnn_news_YYYY-MM-DD-tsne_clusters.parquet
-parquet_file_pattern = re.compile(r"cnn_news_(\d{4}-\d{2}-\d{2})-tsne_clusters\.parquet")
-
-most_recent_parquet_file = None
-most_recent_parquet_date = None
-
-for filename in all_files_in_drive:
-    match = parquet_file_pattern.match(filename)
-    if match:
-        date_str = match.group(1)
-        current_date = datetime.strptime(date_str, '%Y-%m-%d')
-
-        if most_recent_parquet_date is None or current_date > most_recent_parquet_date:
-            most_recent_parquet_date = current_date
-            most_recent_parquet_file = filename
-
-if most_recent_parquet_file:
-    full_path_most_recent_parquet = os.path.join(drive_path, most_recent_parquet_file)
-    print(f"The most recent parquet file is: {most_recent_parquet_file}")
+if freshest_tsne_parquet is not None:
+    full_path_most_recent_parquet = str(freshest_tsne_parquet)
+    print(f"The most recent parquet file is: {freshest_tsne_parquet.name}")
     print(f"Full path: {full_path_most_recent_parquet}")
 
-    # Load the parquet file
     loaded_tsne_df = pd.read_parquet(full_path_most_recent_parquet)
-    print("Successfully loaded the most recent tsne_clusters.parquet file into 'loaded_tsne_df'.")
+    print(
+        "Successfully loaded the most recent tsne_clusters.parquet file into 'loaded_tsne_df'."
+    )
     print(loaded_tsne_df.head())
+elif "tsne_df" in locals():
+    loaded_tsne_df = tsne_df.copy()
+    print("Using in-memory 'tsne_df' as 'loaded_tsne_df'.")
 else:
-    print("No parquet files matching the pattern 'cnn_news_YYYY-MM-DD-tsne_clusters.parquet' were found.")
+    print(
+        "No parquet files matching the pattern 'cnn_news_YYYY-MM-DD-tsne_clusters.parquet' were found."
+    )
     loaded_tsne_df = None
 
-# Define the pattern to match cnn_news_YYYY-MM-DD-tsne_clusters.parquet
-parquet_file_pattern = re.compile(r"cnn_news_(\d{4}-\d{2}-\d{2})-embeddings\.parquet")
+freshest_emb_parquet = find_freshest_dated_file(
+    drive_path,
+    prefix="cnn_news_",
+    suffix="-embeddings.parquet",
+    fallback_dirs=[get_resources_dir()],
+)
 
-most_recent_parquet_file = None
-most_recent_parquet_date = None
-
-for filename in all_files_in_drive:
-    match = parquet_file_pattern.match(filename)
-    if match:
-        print(f"... found {filename}")
-        date_str = match.group(1)
-        current_date = datetime.strptime(date_str, '%Y-%m-%d')
-
-        if most_recent_parquet_date is None or current_date > most_recent_parquet_date:
-            most_recent_parquet_date = current_date
-            most_recent_parquet_file = filename
-
-if most_recent_parquet_file:
-    full_path_most_recent_parquet = os.path.join(drive_path, most_recent_parquet_file)
-    print(f"The most recent parquet file is: {most_recent_parquet_file}")
+if freshest_emb_parquet is not None:
+    full_path_most_recent_parquet = str(freshest_emb_parquet)
+    print(f"The most recent parquet file is: {freshest_emb_parquet.name}")
     print(f"Full path: {full_path_most_recent_parquet}")
 
-    # Load the parquet file
     loaded_embeddings_df = pd.read_parquet(full_path_most_recent_parquet)
-    print("Successfully loaded the most recent embeddings.parquet file into 'loaded_embeddings_df'.")
+    print(
+        "Successfully loaded the most recent embeddings.parquet file into 'loaded_embeddings_df'."
+    )
     print(loaded_embeddings_df.head())
+elif "embeddings_df" in locals():
+    loaded_embeddings_df = embeddings_df.copy()
+    print("Using in-memory 'embeddings_df' as 'loaded_embeddings_df'.")
 else:
-    print("No parquet files matching the pattern 'cnn_news_YYYY-MM-DD-embeddings.parquet' were found.")
+    print(
+        "No parquet files matching the pattern 'cnn_news_YYYY-MM-DD-embeddings.parquet' were found."
+    )
     loaded_embeddings_df = None
 
 
@@ -998,59 +699,10 @@ example_embeddings_df.sample(3).T
 # %% [markdown] id="L0aPMfQSQABZ"
 # # STEP 5. Orthogonalize
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="EXsUxElGQGhj" outputId="951ba2a6-a40d-48a7-87f2-060dad2295df"
-# !pip install pymanopt | grep -v already
-
 # %% id="kvfbjvuDBlvQ"
-import pymanopt
-from pymanopt.manifolds import Stiefel
-from pymanopt.optimizers import ConjugateGradient
-import autograd.numpy as anp
 from sklearn.metrics.pairwise import cosine_similarity
-
-
-# %% id="8qUXxHc5RASY"
-def gram_schmidt(N_matrix):
-    """Orthogonalization - Gram-Schmidt."""
-    n, dim = N_matrix.shape
-    V = np.zeros_like(N_matrix, dtype=float)
-
-    for i in range(n):
-        v = N_matrix[i].copy().astype(float)
-        for j in range(i):
-            v -= np.dot(v, V[j]) * V[j]
-        norm = np.linalg.norm(v)
-        V[i] = v / norm if norm > 1e-10 else v
-
-    return V
-
-
-# %% id="6xVAH3HSQFMV"
-def stiefel_optimize(N_matrix, softmin_temp=0.05, max_iter=300):
-    """
-    Optimization on Stiefel manifold.
-    Maximizes min_i <N_i, V_i> avec V @ V.T = I.
-    """
-    n, dim = N_matrix.shape
-
-    # Stiefel manifold
-    manifold = Stiefel(dim, n)
-
-    @pymanopt.function.autograd(manifold)
-    def cost(V):
-        Vt = V.T
-        projections = anp.sum(N_matrix * Vt, axis=1)
-        softmin = -softmin_temp * anp.log(anp.sum(anp.exp(-projections / softmin_temp)))
-        return -softmin
-
-    problem = pymanopt.Problem(manifold, cost)
-    optimizer = ConjugateGradient(verbosity=1, max_iterations=max_iter)
-
-    # Initialization with Gram-Schmidt
-    V_init = gram_schmidt(N_matrix).T
-    result = optimizer.run(problem, initial_point=V_init)
-
-    return result.point.T, result
+# gram_schmidt, stiefel_optimize, decompose_narratives, and average_cluster_prototypes
+# are imported from narrative_geometry
 
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="to3_w4qBShRK" outputId="af50123f-0d5b-44a1-e824-880274050306"
@@ -1081,17 +733,10 @@ cluster_short_descriptions
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="VLKsCVTNQUGb" outputId="9b2eb5bc-fb2f-4d1e-b877-25a8740c6a4d"
 narrative_matrix_unorm = np.array([N for N in example_embeddings_df.embedding.values])
-narrative_matrix = np.array([narrative_matrix_unorm[i] / np.linalg.norm(narrative_matrix_unorm[i]) for i in range(len(narrative_matrix_unorm))])
-
-
-""" normalize each narrative"""
+narrative_matrix, orthogonal_matrix, residuals_matrix, score = decompose_narratives(
+    narrative_matrix_unorm
+)
 print(narrative_matrix.shape)
-
-orthogonal_matrix, score = stiefel_optimize(narrative_matrix)
-
-residuals_matrix = narrative_matrix_unorm - orthogonal_matrix
-""" normalize the residuals matrix """
-residuals_matrix = np.array([residuals_matrix[i] / np.linalg.norm(residuals_matrix[i]) for i in range(len(residuals_matrix))])
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 176} id="l47BSpnvRusL" outputId="2b2ee812-5301-4e12-d99f-349ce5154e39"
 example_labels_ser = example_embeddings_df.reset_index()[['cluster_id', 'index']].apply(
@@ -1126,7 +771,6 @@ cosine_sim_all = cosine_similarity(np.vstack([narrative_matrix, orthogonal_matri
 # %% colab={"base_uri": "https://localhost:8080/", "height": 626} id="WiWtODysQzYX" outputId="983a1fdd-4942-4d03-c64f-32d501b37da9"
 import matplotlib.pyplot as plt
 import seaborn as sns
-from google.colab import files
 
 
 fig, axes = plt.subplots(1, 1, figsize=(20, 10))
@@ -1150,29 +794,20 @@ plt.setp(axes.get_xticklabels(), rotation=45, ha="right")
 plt.setp(axes.get_yticklabels(), rotation=0)
 
 plt.tight_layout()
-
-for ext in ['.png', '.pdf']:
-  plt.savefig('cosine_similarities_all' + ext, dpi=150, bbox_inches='tight')
-  files.download('cosine_similarities_all' + ext)
+save_and_download_figure('cosine_similarities_all')
 
 
 # %% [markdown] id="aPTRP2q90sHq"
 # ## 5.2. After an average
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="26a_v75PdFNG" outputId="c08c7854-acd0-41e8-ad8d-8177bfadccbe"
-narrative_avg_matrix_unorm_df = example_embeddings_df.groupby('cluster_id').embedding.mean()
-narrative_avg_matrix_unorm = np.array([N for N in narrative_avg_matrix_unorm_df.values])
-narrative_avg_matrix = np.array([narrative_avg_matrix_unorm[i] / np.linalg.norm(narrative_avg_matrix_unorm[i]) for i in range(len(narrative_avg_matrix_unorm))])
-
-
-""" normalize each narrative"""
+narrative_avg_matrix_unorm = average_cluster_prototypes(
+    example_embeddings_df, cluster_col="cluster_id", embedding_col="embedding"
+)
+narrative_avg_matrix, orthogonal_avg_matrix, residuals_avg_matrix, score = decompose_narratives(
+    narrative_avg_matrix_unorm
+)
 print(narrative_avg_matrix.shape)
-
-orthogonal_avg_matrix, score = stiefel_optimize(narrative_avg_matrix)
-
-residuals_avg_matrix = narrative_avg_matrix_unorm - orthogonal_avg_matrix
-""" normalize the residuals matrix """
-residuals_avg_matrix = np.array([residuals_avg_matrix[i] / np.linalg.norm(residuals_avg_matrix[i]) for i in range(len(residuals_avg_matrix))])
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 176} id="tzmFPks_Iwi6" outputId="dfd1b9e0-cd56-47ba-9577-a8e7aedf2e69"
 example_labels_avg_ser = pd.Series([v for _, v in cluster_short_descriptions.items()])
@@ -1186,11 +821,11 @@ avg_narratives = pd.DataFrame([{
 avg_narratives_orth = pd.DataFrame([{
     "chapter": 'orth:' + example_labels_avg_ser[i],
     "title"  : "pure (orth) narratives",
-    "embedding": orthogonal_matrix[i]} for i in range(example_labels_avg_ser.shape[0])])
+    "embedding": orthogonal_avg_matrix[i]} for i in range(example_labels_avg_ser.shape[0])])
 avg_narratives_complementary = pd.DataFrame([{
     "chapter": 'residuals:' + example_labels_avg_ser[i],
     "title"  : "residual narratives",
-    "embedding": residuals_matrix[i]} for i in range(example_labels_avg_ser.shape[0])])
+    "embedding": residuals_avg_matrix[i]} for i in range(example_labels_avg_ser.shape[0])])
 
 
 # %% colab={"base_uri": "https://localhost:8080/"} id="5O1J_NwcJ_Gd" outputId="9b528042-6380-48db-bf2e-1f5782fd4618"
@@ -1207,7 +842,6 @@ cosine_sim_all_avg = cosine_similarity(np.vstack([
 # %% colab={"base_uri": "https://localhost:8080/", "height": 626} id="PC8MawvDKV6l" outputId="a03f7b92-9cb5-4dd1-b03d-9b8ab2a40fd9"
 import matplotlib.pyplot as plt
 import seaborn as sns
-from google.colab import files
 
 
 fig, axes = plt.subplots(1, 1, figsize=(20, 10))
@@ -1231,10 +865,7 @@ plt.setp(axes.get_xticklabels(), rotation=45, ha="right")
 plt.setp(axes.get_yticklabels(), rotation=0)
 
 plt.tight_layout()
-
-for ext in ['.png', '.pdf']:
-  plt.savefig('cosine_similarities_avg' + ext, dpi=150, bbox_inches='tight')
-  files.download('cosine_similarities_avg' + ext)
+save_and_download_figure('cosine_similarities_avg')
 
 
 # %% [markdown] id="8GJnj0NtLS6e"
@@ -1292,8 +923,8 @@ for col_group in cnn_vs_proto_cosine_df.columns.get_level_values(0).unique():
     ind_min = ser.argmin()
     index_max = ser.index[ind_max]
     index_min = ser.index[ind_min]
-    value_max = ser[ind_max]
-    value_min = ser[ind_min]
+    value_max = float(ser.iloc[ind_max])
+    value_min = float(ser.iloc[ind_min])
     txt_max = loaded_embeddings_df.loc[index_max, 'content']
     for r in replaces:
       txt_max = txt_max.replace(r, '')
@@ -1352,11 +983,7 @@ plt.grid(True)
 plt.title("t-SNE colored by cluster")
 plt.xlabel("t-SNE 1"); plt.ylabel("t-SNE 2")
 plt.tight_layout()
-
-
-for ext in ['.png', '.pdf']:
-  plt.savefig('clusters_CNN' + ext, dpi=150, bbox_inches='tight')
-  files.download('clusters_CNN' + ext)
+save_and_download_figure('clusters_CNN')
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 142} id="zgC7Prsib1BO" outputId="88d595fa-d13f-4d3f-fab9-ca65f8735b2a"
 cluster_attribution_list = []
@@ -1431,11 +1058,7 @@ for ind, (cgr, df) in enumerate(compare_scores_df.groupby(['col_group'])):
       ], axis=1)
   )
 #plt.tight_layout()
-
-
-for ext in ['.png', '.pdf']:
-  plt.savefig('compare_cosine_orth' + ext, dpi=150, bbox_inches='tight')
-  files.download('compare_cosine_orth' + ext)
+save_and_download_figure('compare_cosine_orth')
 
 # %% id="JVpmaXL9uorR" colab={"base_uri": "https://localhost:8080/", "height": 807} outputId="a126f3ac-7793-4b09-91e1-baf58c0831e2"
 stats_simple_df = pd.concat(stats_simple_lst, axis=1)
@@ -1447,13 +1070,7 @@ stats_simple_df
     (stats_simple_df.loc[:,(slice(None), 'mean_in')] - stats_simple_df.loc[:,(slice(None), 'mean_out')].values) /
     stats_simple_df.loc[:,(slice(None), 'std_in')].values
 ).plot(kind='barh', grid=True)
-
-for ext in ['.png', '.pdf']:
-  plt.savefig('compare_cosine_mean' + ext, dpi=150, bbox_inches='tight')
-  files.download('compare_cosine_mean' + ext)
+save_and_download_figure('compare_cosine_mean')
 
 # %% colab={"base_uri": "https://localhost:8080/", "height": 759} id="j0GxeePrgk4v" outputId="8b90230d-a872-42a0-f9e9-166dff3c9af7"
 compare_scores_df
-
-
-# %% id="mYM68CllhYaY"
