@@ -1,3 +1,12 @@
+<pre>
+@article{anglade2026algebra,
+  title   = {The Algebra of Narratives and the Monitoring of Their Relative Dominance},
+  author  = {Anglade, Juliette and Lehalle, Charles-Albert and Massy, Mario},
+  year    = {2026},
+  note    = {Working Paper, {\'E}cole polytechnique, Institut Polytechnique de Paris}
+}
+</pre>
+
 # Narrative Geometry
 
 **Algebraic Orthogonalization on the Stiefel Manifold for Monitoring the Relative Dominance of Competing Narratives**
@@ -13,7 +22,7 @@ When tracking narratives in a corpus using modern bidirectional text encoders (s
 ### Key Methodological Pillars
 
 1. **Linear Generative Model in Embedding Space**:
-   Each article embedding $X_n \in \mathbb{R}^d$ is modeled as a linear combination of orthonormal **pure narratives** $\{V_i\}_{i=1}^K$ weighted by binary presence indicators $\alpha_{i,n} \in \{0,1\}$, plus an orthogonal residual $\varepsilon_n \in \operatorname{Vect}(V_1,\ldots,V_K)^\perp$ capturing style and unmodeled topics:
+   Each article embedding $X_n \in \mathbb{R}^d$ is modeled as a linear combination of orthonormal **pure narratives** $\{V_i\}_{i=1}^K$ weighted by binary presence indicators $\alpha_{i,n} \in \{0,1\}$, plus an orthogonal residual $\varepsilon_n \in \mathrm{Vect}(V_1,\ldots,V_K)^\perp$ capturing style and unmodeled topics:
    $$X_n = \sum_{i=1}^K \alpha_{i,n}\, V_i + \varepsilon_n$$
    Under orthonormality ($V_i^\top V_j = \delta_{ij}$), the empirical conditional inner product $\hat{p}_i(t) = \frac{1}{n_t}\sum_{n \in \mathcal{C}_t} V_i^\top X_n$ is an **unbiased estimator** of true narrative prevalence $p_i(t) = \mathbb{E}[\alpha_{i,n} \mid \mathcal{F}_t]$, free of signal leakage across narratives.
 
@@ -65,14 +74,6 @@ This repository supports two complementary studies that share the core Stiefel o
 │  algebra_of_narratives_paper_example.py  │ docs/CNN_Iran/                           │
 └──────────────────────────────────────────┴──────────────────────────────────────────┘
 ```
-
-| Feature | Study A: HuffPost Reference Paper | Study B: CNN Iran War Case Study |
-| :--- | :--- | :--- |
-| **Authors** | Juliette Anglade, Charles-Albert Lehalle, Mario Massy | Charles-Albert Lehalle |
-| **Primary Script** | [`notebooks/algebra_of_narratives_paper_example.py`](notebooks/algebra_of_narratives_paper_example.py) | [`notebooks/CNN_Iran_War_scrapping.py`](notebooks/CNN_Iran_War_scrapping.py) |
-| **HTML Output** | [`docs/notebooks/algebra_of_narratives_paper_example.html`](docs/notebooks/algebra_of_narratives_paper_example.html) | [`docs/notebooks/CNN_Iran_War_scrapping.html`](docs/notebooks/CNN_Iran_War_scrapping.html) |
-| **Documentation** | Reference manuscript (*The Algebra of Narratives...*) | [`docs/CNN_Iran/stiefel_narrative_methodology_v3.tex`](docs/CNN_Iran/stiefel_narrative_methodology_v3.tex) & [`stiefel_narrative_slides.pdf`](docs/CNN_Iran/stiefel_narrative_slides.pdf) |
-| **Validation Mode** | Supervised counterfactual (human-labeled HuffPost categories) | Label-free *ex post* validation (in-cluster vs. out-of-cluster separation) |
 
 ---
 
