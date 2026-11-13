@@ -47,9 +47,11 @@ progressbar=head,titleformat=regular,numbering=fraction,subsectionpage=progressb
 \makeatother
 \makeatletter
 \addtobeamertemplate{sidebar right}{}{%
-  \begin{tikzpicture}[remember picture,overlay] %
-    \node[anchor=south east,xshift=0pt,yshift=0pt,opacity=0.4] at (current page.south east) {\includegraphics[width=0.2\paperwidth]{cmap-margin-low.png}};% x_progress
-  \end{tikzpicture} }
+  \IfFileExists{cmap-margin-low.png}{%
+    \begin{tikzpicture}[remember picture,overlay] %
+      \node[anchor=south east,xshift=0pt,yshift=0pt,opacity=0.4] at (current page.south east) {\includegraphics[width=0.2\paperwidth]{cmap-margin-low.png}};% x_progress
+    \end{tikzpicture}%
+  }{}}
 \makeatother
 
 \AtBeginSection{
@@ -81,7 +83,7 @@ progressbar=head,titleformat=regular,numbering=fraction,subsectionpage=progressb
 \def\tightlist{}
 
 \def\xipptitlelogo{%
-  \includegraphics[width=.75\linewidth]{logo_polytechnique_ipp.pdf}
+  \IfFileExists{logo_polytechnique_ipp.pdf}{\includegraphics[width=.75\linewidth]{logo_polytechnique_ipp.pdf}}{}%
 }
 
 \setbeamertemplate{frame footer}{C.-A. Lehalle}
@@ -90,9 +92,9 @@ progressbar=head,titleformat=regular,numbering=fraction,subsectionpage=progressb
 
 \title{Clustering, Prototype Narratives, and Stiefel-Manifold Orthogonalization:}
 \subtitle{A Worked Methodology on CNN Live-Blog Coverage of the 2026 Iran War}
-\date{ \normalsize {\color{xpol}\bf Charles-Albert Lehalle}\hfill {\includegraphics[width=.08\linewidth]{logo_polytechnique_ipp.pdf}}\\[.3em]%
+\date{ \normalsize {\color{xpol}\bf Charles-Albert Lehalle}\hfill \IfFileExists{logo_polytechnique_ipp.pdf}{\includegraphics[width=.08\linewidth]{logo_polytechnique_ipp.pdf}}{}\\[.3em]%
   \small CMAP, Ecole Polytechnique, IP Paris\\[.3em]%
-  \small Following the Anglade-Lehalle-Massi approach of orthogonalisation of narratives\\[.3em]%
+  \small Following the Anglade-Lehalle-Massy approach of orthogonalisation of narratives\\[.3em]%
   \small Printed the Aug 21, 2026}
 
 \usepackage{bbm}
